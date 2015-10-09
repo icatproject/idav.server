@@ -1,0 +1,75 @@
+Possible improvements, thoughts and notes
+-----------------------------------------
+
+In the doBody method in DoGet the first call is to getStoredObject which could 
+be avoided as this call has already been made in the DoHead execute method -
+which is inherited by DoGet. The object retrieved in doBody could simply be 
+passed as an argument to the doBody method.
+Having looked at 2 executions of the GET method in the latest log file, it
+seems that the getStoredObject method is taking 4 ms to execute. This would
+give a negligible performance improvement - about 5 mins saved over a copy
+of the 76K files in the Monney investigation (which takes 7 or 8 hours).
+It would however reduce the number of calls being made to ICAT and the database
+which helps reduce deadlock and max-pool-size exceptions.
+
+At the end of the DoPut execute method there appears to be a redundant
+call to getStoredObject. As with the improvement above, this only saves
+about 4 ms per invocation but would mean one less call to ICAT.
+
+During a Windows Explorer copy of a file, the getStoredObject method is called
+12 times (this could be reduced using some of the other improvements mentioned
+here). Does it make sense to have some kind of StoredObject cache such that
+subsequent calls return the cached StoredObject and only the first requires a
+call to ICAT? Although getStoredObject only takes about 4ms to execute, with 
+10+ invocations there is potentially 40ms per file to be saved equivalent to 
+about 50 mins over 76K files (nearly an hour off a 7-8 hour copy). Small files 
+(a few hundred KB or less) take about 1/3 of a second to copy so the items in
+the cache could be potentially very short lived. This would alleviate the 
+potential problem in some ICAT systems there may be another process 
+adding/removing/modifying files whilst you are downloading them. 
+
+Can Propfind be improved by doing one query to get a directory listing?
+
+Try setting parallelCount to zero in the IDS properties file to stop the IDS
+constantly cycling through datafiles and checking them. This might reduce
+the number of deadlock and max-pool-size exceptions - currently testing.
+
+
+Effect of removing doPut call to createResource: (this is currently
+commented out whilst the effect is being tested)
+
+Creating a zero sized file during a PUT takes about 40 ms.
+Not doing this is a saving of about 50 mins over 76K files.
+Deleting the zero sized file during a PUT also takes about 40 ms
+so another 50 mins saved - potentially 1.5 to 2 hours off of 7 or 8
+so potentially about 20% faster. 
+
+
+The whole locking system seems overly complicated and pretty flaky. Starting
+with the fact that the ResourceLocks class has the following comment at the top
+of it:
+"simple locking management for concurrent data access, NOT the webdav locking.
+( could that be used instead? )"
+suggests that the person implementing it was not 100% sure about what they were
+doing.
+The linked nature of locks having children and that child lock having a parent
+pointing back to the lock creates infinite loops which make things it very 
+difficult to inspect and debug.
+I am pretty sure that old locks are not checked for or cleaned out regularly
+enough because the checkLocks method in AbstractMethod only appears to check
+for the presence of a lock and does not check the expiresAt value after it has
+found the lock, thus resulting in objects being reported as locked even though
+the lock could be well past its expiry date. 
+The timeouts on temporary locked objects are checked on most DoXxx method calls
+when a call to _resourceLocks.unlockTemporaryLockedObjects is made and at the
+end of that call a call to checkTimeouts (for temporary locks) is made.
+However, for non-temporary locks, these are only checked and removed via a call
+to _resourceLocks.unlock at the end of which there is a call to checkTimeouts
+(for full locks) and this call is only made from DoMkcol, DoPut and DoUnlock.
+If a user opens a Word doc, for example, Windows calls the LOCK method to put 
+an exclusive write lock on the file. This would be UNLOCKed by Windows after 
+the file is saved or if Word is closed, but if the user just leaves it open in
+Word then the lock is not released. If no new folders or files are created to 
+trigger checkTimeouts to clean up old locks then the file will remain locked - 
+because the expiry date is never checked otherwise.  
+
