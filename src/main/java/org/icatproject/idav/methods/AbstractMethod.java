@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.icatproject.iDav.methods;
+package org.icatproject.idav.methods;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -36,15 +36,15 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.lang3.StringUtils;
 
-import org.icatproject.iDav.IMethodExecutor;
-import org.icatproject.iDav.StoredObject;
-import org.icatproject.iDav.WebdavStatus;
-import org.icatproject.iDav.exceptions.LockFailedException;
-import org.icatproject.iDav.fromcatalina.RequestUtil;
-import org.icatproject.iDav.fromcatalina.URLEncoder;
-import org.icatproject.iDav.fromcatalina.XMLWriter;
-import org.icatproject.iDav.locking.IResourceLocks;
-import org.icatproject.iDav.locking.LockedObject;
+import org.icatproject.idav.IMethodExecutor;
+import org.icatproject.idav.StoredObject;
+import org.icatproject.idav.WebdavStatus;
+import org.icatproject.idav.exceptions.LockFailedException;
+import org.icatproject.idav.fromcatalina.RequestUtil;
+import org.icatproject.idav.fromcatalina.URLEncoder;
+import org.icatproject.idav.fromcatalina.XMLWriter;
+import org.icatproject.idav.locking.IResourceLocks;
+import org.icatproject.idav.locking.LockedObject;
 
 public abstract class AbstractMethod implements IMethodExecutor {
 

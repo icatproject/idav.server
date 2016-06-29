@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package org.icatproject.iDav.locking;
+package org.icatproject.idav.locking;
 
 import java.util.Enumeration;
 import java.util.Hashtable;
 
-import org.icatproject.iDav.exceptions.LockFailedException;
+import org.icatproject.idav.exceptions.LockFailedException;
 
 /**
  * simple locking management for concurrent data access, NOT the webdav locking.

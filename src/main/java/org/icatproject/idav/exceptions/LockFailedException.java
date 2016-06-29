@@ -1,4 +1,4 @@
-package org.icatproject.iDav.exceptions;
+package org.icatproject.idav.exceptions;
 
 @SuppressWarnings("serial")
 public class LockFailedException extends WebdavException {

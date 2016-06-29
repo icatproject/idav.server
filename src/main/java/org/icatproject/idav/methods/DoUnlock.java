@@ -1,16 +1,16 @@
-package org.icatproject.iDav.methods;
+package org.icatproject.idav.methods;
 
 import java.io.IOException;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.icatproject.iDav.StoredObject;
-import org.icatproject.iDav.WebdavStatus;
-import org.icatproject.iDav.IWebdavStore;
-import org.icatproject.iDav.exceptions.LockFailedException;
-import org.icatproject.iDav.locking.IResourceLocks;
-import org.icatproject.iDav.locking.LockedObject;
+import org.icatproject.idav.StoredObject;
+import org.icatproject.idav.WebdavStatus;
+import org.icatproject.idav.IWebdavStore;
+import org.icatproject.idav.exceptions.LockFailedException;
+import org.icatproject.idav.locking.IResourceLocks;
+import org.icatproject.idav.locking.LockedObject;
 
 public class DoUnlock extends DeterminableMethod {
 

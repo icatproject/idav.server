@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.icatproject.iDav.methods;
+package org.icatproject.idav.methods;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -27,17 +27,17 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.parsers.DocumentBuilder;
 
-import org.icatproject.iDav.IMimeTyper;
-import org.icatproject.iDav.IWebdavStore;
-import org.icatproject.iDav.StoredObject;
-import org.icatproject.iDav.WebdavStatus;
-import org.icatproject.iDav.exceptions.AccessDeniedException;
-import org.icatproject.iDav.exceptions.LockFailedException;
-import org.icatproject.iDav.exceptions.WebdavException;
-import org.icatproject.iDav.fromcatalina.XMLHelper;
-import org.icatproject.iDav.fromcatalina.XMLWriter;
-import org.icatproject.iDav.locking.LockedObject;
-import org.icatproject.iDav.locking.ResourceLocks;
+import org.icatproject.idav.IMimeTyper;
+import org.icatproject.idav.IWebdavStore;
+import org.icatproject.idav.StoredObject;
+import org.icatproject.idav.WebdavStatus;
+import org.icatproject.idav.exceptions.AccessDeniedException;
+import org.icatproject.idav.exceptions.LockFailedException;
+import org.icatproject.idav.exceptions.WebdavException;
+import org.icatproject.idav.fromcatalina.XMLHelper;
+import org.icatproject.idav.fromcatalina.XMLWriter;
+import org.icatproject.idav.locking.LockedObject;
+import org.icatproject.idav.locking.ResourceLocks;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;

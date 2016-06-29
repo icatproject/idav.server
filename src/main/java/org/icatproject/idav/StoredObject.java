@@ -17,7 +17,7 @@
  *
  */
 
-package org.icatproject.iDav;
+package org.icatproject.idav;
 
 import java.util.Date;
 

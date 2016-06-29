@@ -1,6 +1,6 @@
-package org.icatproject.iDav.locking;
+package org.icatproject.idav.locking;
 
-import org.icatproject.iDav.exceptions.LockFailedException;
+import org.icatproject.idav.exceptions.LockFailedException;
 
 public interface IResourceLocks {
 

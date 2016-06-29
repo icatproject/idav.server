@@ -10,7 +10,7 @@
 	<servlet>
 		<servlet-name>webdav</servlet-name>
 		<servlet-class>
-			org.icatproject.iDav.WebdavServlet
+			org.icatproject.idav.WebdavServlet
 		</servlet-class>
 		<!-- TODO - remove the init-params as they are now in a properties file -->
 		<!-- init-param>

@@ -13,7 +13,7 @@
  * limitations under the License.
  *
  */
-package org.icatproject.iDav;
+package org.icatproject.idav;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -27,8 +27,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import org.icatproject.iDav.exceptions.UnauthenticatedException;
-import org.icatproject.iDav.exceptions.WebdavException;
+import org.icatproject.idav.exceptions.UnauthenticatedException;
+import org.icatproject.idav.exceptions.WebdavException;
 
 /**
  * Reference Implementation of WebdavStore

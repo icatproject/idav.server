@@ -1,27 +1,23 @@
-package org.icatproject.iDav;
+package org.icatproject.idav;
 
 import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.namespace.QName;
 
-import org.icatproject.iDav.exceptions.AccessDeniedException;
-import org.icatproject.iDav.exceptions.UnauthenticatedException;
-import org.icatproject.iDav.exceptions.WebdavException;
+import org.icatproject.idav.exceptions.AccessDeniedException;
+import org.icatproject.idav.exceptions.UnauthenticatedException;
+import org.icatproject.idav.exceptions.WebdavException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.icatproject.Datafile;
@@ -39,7 +35,7 @@ import org.icatproject.InvestigationInstrument;
 import org.icatproject.InvestigationType;
 import org.icatproject.Login.Credentials;
 import org.icatproject.Login.Credentials.Entry;
-import org.icatproject.iDav.manager.PropertyManager;
+import org.icatproject.idav.manager.PropertyManager;
 import org.icatproject.ids.client.DataSelection;
 import org.icatproject.ids.client.IdsClient;
 import org.icatproject.ids.client.IdsClient.Flag;
@@ -97,7 +93,7 @@ public class IcatStore implements IWebdavStore {
     public IcatStore() throws Exception {
         try {
             //Load the properties
-            properties = new PropertyManager(Utils.PROPERTIES_FILENAME);
+            properties = new PropertyManager(Utils.PROPERTIES_FILENAME, Utils.HIERARCHY_FILENAME);
            
             // currently assuming that ICAT and IDS are on the same machine
             URL icatAndIdsServerURL = new URL(properties.getIcatUrl());

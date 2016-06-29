@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.icatproject.iDav.fromcatalina;
+package org.icatproject.idav.fromcatalina;
 
 import java.io.IOException;
 import java.io.Writer;

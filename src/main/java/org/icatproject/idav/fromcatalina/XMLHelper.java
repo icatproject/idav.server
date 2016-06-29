@@ -1,4 +1,4 @@
-package org.icatproject.iDav.fromcatalina;
+package org.icatproject.idav.fromcatalina;
 
 import java.util.ArrayList;
 import java.util.List;

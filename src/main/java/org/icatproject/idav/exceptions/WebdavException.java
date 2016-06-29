@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.icatproject.iDav.exceptions;
+package org.icatproject.idav.exceptions;
 
 @SuppressWarnings("serial")
 public class WebdavException extends RuntimeException {

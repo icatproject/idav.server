@@ -3,13 +3,23 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.icatproject.iDav.manager;
+package org.icatproject.idav.manager;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import java.util.logging.Level;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,8 +37,9 @@ public class PropertyManager {
     private String datafileFormatName;
     private String[] hierarchy;
 
-    public PropertyManager(String propertyFile) {
+    public PropertyManager(String propertyFile, String hierarchyFile) {
         collectProperties(propertyFile);
+        parseHierarchyFile(hierarchyFile);
     }
 
     /**
@@ -61,8 +72,6 @@ public class PropertyManager {
         String sessionRefreshMarginMinsString = props.getProperty("sessionRefreshMarginMins");
         sessionRefreshMarginMins = Integer.parseInt(sessionRefreshMarginMinsString);
         
-        String hierarchyString = props.getProperty("hierarchy");
-
         instrumentName = props.getProperty("instrumentName");
         investigationTypeName = props.getProperty("investigationTypeName");
         datasetTypeName = props.getProperty("datasetTypeName");
@@ -78,6 +87,21 @@ public class PropertyManager {
 
         LOG.info("Finished collecting properties.");
 
+    }
+    
+    public void parseHierarchyFile(String fileName){
+        try {
+            JSONParser parser = new JSONParser();
+            JSONArray resultArray = (JSONArray) parser.parse(new FileReader(fileName));
+            
+            for(Object hierarchyPoint:resultArray){
+                
+                JSONObject entity = (JSONObject) hierarchyPoint;
+            
+            }
+        } catch (IOException | ParseException ex) {
+            java.util.logging.Logger.getLogger(PropertyManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     public String getIcatUrl() {

@@ -1,4 +1,4 @@
-package org.icatproject.iDav;
+package org.icatproject.idav;
 
 import java.io.IOException;
 import java.security.MessageDigest;
@@ -9,24 +9,24 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.icatproject.iDav.exceptions.AccessDeniedException;
-import org.icatproject.iDav.exceptions.UnauthenticatedException;
-import org.icatproject.iDav.exceptions.WebdavException;
-import org.icatproject.iDav.fromcatalina.MD5Encoder;
-import org.icatproject.iDav.locking.ResourceLocks;
-import org.icatproject.iDav.methods.DoCopy;
-import org.icatproject.iDav.methods.DoDelete;
-import org.icatproject.iDav.methods.DoGet;
-import org.icatproject.iDav.methods.DoHead;
-import org.icatproject.iDav.methods.DoLock;
-import org.icatproject.iDav.methods.DoMkcol;
-import org.icatproject.iDav.methods.DoMove;
-import org.icatproject.iDav.methods.DoNotImplemented;
-import org.icatproject.iDav.methods.DoOptions;
-import org.icatproject.iDav.methods.DoPropfind;
-import org.icatproject.iDav.methods.DoProppatch;
-import org.icatproject.iDav.methods.DoPut;
-import org.icatproject.iDav.methods.DoUnlock;
+import org.icatproject.idav.exceptions.AccessDeniedException;
+import org.icatproject.idav.exceptions.UnauthenticatedException;
+import org.icatproject.idav.exceptions.WebdavException;
+import org.icatproject.idav.fromcatalina.MD5Encoder;
+import org.icatproject.idav.locking.ResourceLocks;
+import org.icatproject.idav.methods.DoCopy;
+import org.icatproject.idav.methods.DoDelete;
+import org.icatproject.idav.methods.DoGet;
+import org.icatproject.idav.methods.DoHead;
+import org.icatproject.idav.methods.DoLock;
+import org.icatproject.idav.methods.DoMkcol;
+import org.icatproject.idav.methods.DoMove;
+import org.icatproject.idav.methods.DoNotImplemented;
+import org.icatproject.idav.methods.DoOptions;
+import org.icatproject.idav.methods.DoPropfind;
+import org.icatproject.idav.methods.DoProppatch;
+import org.icatproject.idav.methods.DoPut;
+import org.icatproject.idav.methods.DoUnlock;
 
 @SuppressWarnings("serial")
 public class WebDavServletBean extends HttpServlet {

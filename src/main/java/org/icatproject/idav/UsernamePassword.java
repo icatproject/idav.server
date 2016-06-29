@@ -1,4 +1,4 @@
-package org.icatproject.iDav;
+package org.icatproject.idav;
 
 public class UsernamePassword {
 

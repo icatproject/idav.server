@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.icatproject.iDav.fromcatalina;
+package org.icatproject.idav.fromcatalina;
 
 /**
  * Encode an MD5 digest into a String.

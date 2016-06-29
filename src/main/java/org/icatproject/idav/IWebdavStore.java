@@ -21,14 +21,14 @@
  *
  */
 
-package org.icatproject.iDav;
+package org.icatproject.idav;
 
 import java.io.InputStream;
 //import java.security.Principal;
 
 import java.util.List;
 
-import org.icatproject.iDav.exceptions.WebdavException;
+import org.icatproject.idav.exceptions.WebdavException;
 
 /**
  * Interface for simple implementation of any store for the WebdavServlet

@@ -1,12 +1,12 @@
-package org.icatproject.iDav.methods;
+package org.icatproject.idav.methods;
 
 import java.io.IOException;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.icatproject.iDav.IMethodExecutor;
-import org.icatproject.iDav.WebdavStatus;
+import org.icatproject.idav.IMethodExecutor;
+import org.icatproject.idav.WebdavStatus;
 
 public class DoNotImplemented implements IMethodExecutor {
 

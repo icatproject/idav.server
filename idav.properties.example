@@ -15,7 +15,9 @@ instrumentName		Artemis
 investigationTypeName	experiment
 datasetTypeName		Artemis
 datafileFormatName	unknown
-# end of implementation specific properties
+
+# Structure
+hierarchy {"Facility","Instrument","FacilityCycle","Investigation","Dataset","Datafile" }
 
 
 # WebDav

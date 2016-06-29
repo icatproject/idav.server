@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.icatproject.iDav.methods;
+package org.icatproject.idav.methods;
 
-import org.icatproject.iDav.StoredObject;
+import org.icatproject.idav.StoredObject;
 
 public abstract class DeterminableMethod extends AbstractMethod {
 

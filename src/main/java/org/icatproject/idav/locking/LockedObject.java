@@ -1,4 +1,4 @@
-package org.icatproject.iDav.locking;
+package org.icatproject.idav.locking;
 
 import java.util.Arrays;
 import java.util.Date;

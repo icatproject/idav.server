@@ -1,6 +1,6 @@
-package org.icatproject.iDav;
+package org.icatproject.idav;
 
-import org.icatproject.iDav.exceptions.UnauthenticatedException;
+import org.icatproject.idav.exceptions.UnauthenticatedException;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
@@ -9,6 +9,8 @@ import org.icatproject.Datafile;
 public class Utils {
 
 	public static final String PROPERTIES_FILENAME = "idav.properties";
+        
+        public static final String HIERARCHY_FILENAME = "idav.structure";
 	
 	public static UsernamePassword getUsernamePasswordFromAuthString(String authString) throws UnauthenticatedException {
 		// note - we should already know that the username password string
