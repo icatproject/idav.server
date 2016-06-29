@@ -1,13 +1,14 @@
-# full name of the class that implements net.sf.webdav.IWebdavStore
-webdavImplementationClassName	net.sf.webdav.IcatStore
+# ICAT 
 
-
-# properties specific to the IcatStore implementation
-icatURL	https://sig-00.esc.rl.ac.uk:8181
-# space/tab separated list of authenticators to use (in the specified order)
-# note that only username/password authenticators can be used currently
-icatAuthenticators	simple ldap uows
+icat.url https://icat-dev.isis.stfc.ac.uk:8181
+icat.authenticators	simple ldap uows
 sessionRefreshMarginMins	10
+
+# IDS
+
+ids.url https://idsdev2.isis.cclrc.ac.uk
+
+
 # the following 4 properties are required in order to create 
 # new Facility, Investigation, Dataset and Datafile objects
 instrumentName		Artemis
@@ -17,7 +18,9 @@ datafileFormatName	unknown
 # end of implementation specific properties
 
 
-# general properties for the webdav server
+# WebDav
+
+webdavImplementationClassName	net.sf.webdav.IcatStore
 
 # overriding RFC 2518, the folders of resources being created, can be created too if they do not exist.
 # TODO - find out what exactly this means!

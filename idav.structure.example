@@ -1,0 +1,9 @@
+idav.structure
+
+"hierarchy":[
+	"Instrument",
+    "FacilityCycle",	
+	"Investigation",
+	"Dataset",
+	"Datafile"
+]
