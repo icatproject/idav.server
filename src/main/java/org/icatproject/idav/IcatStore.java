@@ -24,6 +24,7 @@ import org.icatproject.Datafile;
 import org.icatproject.DatafileFormat;
 import org.icatproject.Dataset;
 import org.icatproject.DatasetType;
+import org.icatproject.EntityBaseBean;
 import org.icatproject.Facility;
 import org.icatproject.ICAT;
 import org.icatproject.ICATService;
@@ -74,6 +75,8 @@ public class IcatStore implements IWebdavStore {
     // lock to be used whenever access is being made to either of the session maps
     private static Object sessionMapsLock = new Object();
     
+    private static ArrayList<Member> hierarchy;
+    
     private PropertyManager properties;
     
     // cached objects (frequently used and never changed)
@@ -94,6 +97,8 @@ public class IcatStore implements IWebdavStore {
         try {
             //Load the properties
             properties = new PropertyManager(Utils.PROPERTIES_FILENAME, Utils.HIERARCHY_FILENAME);
+            
+            hierarchy = properties.getHierarchy();
            
             // currently assuming that ICAT and IDS are on the same machine
             URL icatAndIdsServerURL = new URL(properties.getIcatUrl());
@@ -283,69 +288,8 @@ public class IcatStore implements IWebdavStore {
 
     }
 
-    // KP 24/09/15 - this is the old version of getChildrenNames
-    // and might be needed in the future if the code is used on existing
-    // ICATs where the datafiles have not been put in using IDAV.
-    // Because IDAV creates pseudo folder entries (as Datafiles with 
-    // the description FOLDER) this method can be made more efficient
-    // so that it does not return any more Datafile records than necessary
-    // in order to find the children at any level.
-    // Using the old method it is necessary to return all the Datafiles
-    // below a certain folder - perhaps many thousands - just to find out
-    // that there are a couple of sub-folders in this folder. 
-//    public String[] getChildrenNamesOld(String authString, String uri)
-//            throws WebdavException {
-//        LOG.trace("IcatStore.getChildrenNames(" + uri + ")");
-//        String icatQuery = null;
-//        int datafilesLevelDepth = getDatafilesLevelDepth(uri);
-//        IcatEntityNames icatEntityNames = getIcatEntityNames(uri);
-//        String[] uriParts = getUriParts(uri);
-//    	if (uriParts.length == 0 || uriParts.length == 1) {
-//    		// this is the root of the server - search for facilities
-//    		icatQuery = "SELECT facility.name from Facility facility";
-////    	} else if (uriParts.length == 1) {
-////    		// this should never happen (but it can if the uri is an empty string!)
-////    		String message = "Unable to handle uri: '" + uri + "'";
-////    		LOG.debug(message);
-////    		throw new WebdavException(message);
-//    	} else if (uriParts.length == 2) {
-//    		// search for investigations in this facility
-//    		icatQuery = "SELECT investigation.title from Investigation investigation" + createWhereClause(icatEntityNames);
-//    	} else if (uriParts.length == 3) {
-//    		// search for datasets in this investigation and facility
-//    		icatQuery = "SELECT dataset.name from Dataset dataset" + createWhereClause(icatEntityNames);
-//    	} else if (uriParts.length == 4) {
-//    		// search for datafiles in this dataset, investigation and facility
-//    		icatQuery = "SELECT datafile.name from Datafile datafile" + createWhereClause(icatEntityNames);
-//    	} else {
-//    		// re-combine all of the parts beyond 4
-//    		// and add datafile.name like 'datafilepath%' to the query
-//    		// search for datafiles in this dataset, investigation and facility
-//    		icatQuery = "SELECT datafile.name from Datafile datafile" + createWhereClause(icatEntityNames, DatafileSearchType.LIKE);
-//    	}
-//
-//    	LOG.debug("datafilesLevelDepth = " + datafilesLevelDepth);
-//		LOG.debug("icatQuery = [" + icatQuery + "]");
-//		List<Object> results = doIcatSearch(authString, icatQuery);
-//		if ( datafilesLevelDepth == -1 ) {
-//			// Facility, Investigation and Dataset listings are straightforward
-//			String[] resultsStringArray = new String[results.size()];
-//			resultsStringArray = results.toArray(resultsStringArray);
-//			return resultsStringArray;
-//		} else {
-//			// create a list of all the file and virtual folder names 
-//			// at the current datafile level depth
-//			Set<String> children = new HashSet<String>();
-//			for ( Object pathObj : results ) {
-//				String relativePath = (String)pathObj;
-//				String[] pathParts = getUriParts(relativePath);
-//				children.add(pathParts[datafilesLevelDepth]);
-//			}
-//			String[] resultsStringArray = new String[children.size()];
-//			resultsStringArray = children.toArray(resultsStringArray);
-//			return resultsStringArray;
-//		}
-//    }    
+    
+    @Override
     public String[] getChildrenNames(String authString, String uri)
             throws WebdavException {
         LOG.trace("IcatStore.getChildrenNames(" + uri + ")");
@@ -354,21 +298,16 @@ public class IcatStore implements IWebdavStore {
         LOG.debug("datafilesLevelDepth = " + datafilesLevelDepth);
         IcatEntityNames icatEntityNames = getIcatEntityNames(uri);
         String[] uriParts = getUriParts(uri);
-        if (uriParts.length == 0 || uriParts.length == 1) {
-            // this is the root of the server - search for facilities
-            icatQuery = "SELECT facilityCycle.name FROM FacilityCycle facilityCycle";
-//    	} else if (uriParts.length == 1) {
-//    		// this should never happen (but it can if the uri is an empty string!)
-//    		String message = "Unable to handle uri: '" + uri + "'";
-//    		LOG.debug(message);
-//    		throw new WebdavException(message);
-        } else if (uriParts.length == 2) {
-            // search for investigations in this facility
-            icatQuery = "SELECT investigation.title FROM Investigation investigation" + createWhereClause(icatEntityNames);
-        } else if (uriParts.length == 3) {
-            // search for datasets in this investigation and facility
-            icatQuery = "SELECT dataset.name FROM Dataset dataset" + createWhereClause(icatEntityNames);
-        } else {
+          
+                               
+        int length = uriParts.length;
+        
+        //Deal with going from Root level being 0 and next levels being 1 more then they should.
+        if(length>0) length -=1;
+        
+        Member selectedMember = hierarchy.get(length);
+        
+        if(selectedMember.getEntity()=="Datafile"){
             // search for datafiles in this dataset, investigation and facility
 //    		icatQuery = "SELECT datafile.name from Datafile datafile" + createWhereClause(icatEntityNames);
             // NOTE: for some reason this query is particularly slow (not always but often 5-10 secs or more).
@@ -406,8 +345,12 @@ public class IcatStore implements IWebdavStore {
             }
             likeString += "%";
             icatQuery = StringUtils.replaceOnce(icatQuery, CURLY_BRACES, likeString);
+            
+        }else{
+            icatQuery = "SELECT entity."+selectedMember.getAttribute()+" FROM "+selectedMember.getEntity()+" entity ";
+            icatQuery += createWhereClause(length,hierarchy,icatEntityNames, true);
         }
-
+        
         LOG.debug("icatQuery = [" + icatQuery + "]");
         List<Object> results = doIcatSearch(authString, icatQuery);
         if (datafilesLevelDepth == -1) {
@@ -430,6 +373,7 @@ public class IcatStore implements IWebdavStore {
         }
     }
 
+    @Override
     public InputStream getResourceContent(String authString, String uri)
             throws WebdavException {
         LOG.trace("IcatStore.getResourceContent(" + uri + ")");
@@ -478,10 +422,77 @@ public class IcatStore implements IWebdavStore {
         LOG.trace("IcatStore.getStoredObject(" + uri + ")");
 
         String icatQuery;
-        int datafilesLevelDepth = getDatafilesLevelDepth(uri);
+       
         IcatEntityNames icatEntityNames = getIcatEntityNames(uri);
-        String[] uriParts = getUriParts(uri);
+        
+        String[] uriParts = getUriParts(uri);         
+                               
+        int length = uriParts.length;
+        
+        //Deal with going from Root level being 0 and next levels being 1 more then they should.
+        if(length>1) length -=2;
+        
+        Member selectedMember = hierarchy.get(length);
+        
+        if(selectedMember.getEntity()=="Datafile"){
+            icatQuery = "SELECT datafile from Datafile datafile" + createWhereClause(icatEntityNames, DatafileSearchType.EQUALS);
+            LOG.debug("icatQuery = [" + icatQuery + "]");
 
+            List<Object> results = doIcatSearch(authString, icatQuery);
+
+            if (results.size() == 1) {
+                // we have found the datafile
+                Datafile df = (Datafile) results.get(0);
+                if (df.getDescription() != null && df.getDescription().equals(FOLDER)) {
+                    // these are the virtual "FOLDER" datafiles created by IDAV 
+                    LOG.debug("Found virtual folder (via description) for uri: '" + uri + "'. Datafile: " + Utils.getDatafileAsShortString(df));
+                    // return a StoredObject with create and modified date set to now
+                    Date now = new Date();
+                    return createFolderStoredObject(now, now);
+                } else {
+                    LOG.debug("Found datafile for uri: '" + uri + "': " + Utils.getDatafileAsShortString(df));
+                    StoredObject so = new StoredObject();
+                    so.setFolder(false);
+                    so.setLastModified(df.getModTime().toGregorianCalendar().getTime());
+                    so.setCreationDate(df.getCreateTime().toGregorianCalendar().getTime());
+                    so.setResourceLength(df.getFileSize());
+                    return so;
+                }
+            } else {
+                // check whether it is a "virtual folder"
+                icatQuery = "SELECT count(datafile) from Datafile datafile" + createWhereClause(icatEntityNames, DatafileSearchType.LIKE);
+                LOG.debug("icatQuery = [" + icatQuery + "]");
+                results = doIcatSearch(authString, icatQuery);
+                long dfCount = (Long) results.get(0);
+                if (dfCount > 0L) {
+                    // these are virtual folders created by most ICAT ingestion processes
+                    // where there is at least one datafile with a name (path) beginning with
+                    // the datafile name we are looking for
+                    LOG.debug("Found virtual folder (via name like) for uri: '" + uri + "'");
+                    // return a StoredObject with create and modified date set to now
+                    Date now = new Date();
+                    return createFolderStoredObject(now, now);
+                }
+            }        
+        }else{
+            icatQuery = "SELECT entity FROM "+selectedMember.getEntity()+" entity ";
+            icatQuery += createWhereClause(length,hierarchy,icatEntityNames, false);
+            
+            LOG.debug("icatQuery = [" + icatQuery + "]");
+            List<Object> results = doIcatSearch(authString, icatQuery);
+            if (results.size() == 1) {
+                EntityBaseBean bean = (EntityBaseBean) results.get(0);
+                return createFolderStoredObject(bean.getCreateTime(), bean.getModTime());
+            }
+            
+        }
+       
+        
+      
+           
+        
+
+        /*
         if (uriParts.length == 0 || uriParts.length == 1) {
             // this is the root of the server
             // return a StoredObject with create and modified date set to now
@@ -564,6 +575,7 @@ public class IcatStore implements IWebdavStore {
                 }
             }
         }
+        */
         // if we have not found a match then a uri must have been
         // provided which doesn't map to an object (or virtual folder) in ICAT
         // return null such that a suitable response is generated by the calling method
@@ -583,6 +595,42 @@ public class IcatStore implements IWebdavStore {
         so.setCreationDate(createDate);
         so.setResourceLength(0L);
         return so;
+    }
+    
+    private static String createWhereClause(int uriPosition, List<Member> hierarchy, IcatEntityNames icatEntityNames, boolean includeTopLevel ){
+        String whereClause = " ";
+        String entity = hierarchy.get(uriPosition).getEntity();
+        
+        switch (entity){
+                case "Datafile":
+                    whereClause = " WHERE datafile.dataset.investigation.facility.name='{}' AND datafile.dataset.investigation.title='{}'";
+                    whereClause += " AND datafile.dataset.name='{}'";
+                    break;
+                case "Dataset":
+                    whereClause = " WHERE datafile.dataset.investigation.facility.name='{}' AND datafile.dataset.investigation.title='{}'";
+                    whereClause += " AND datafile.dataset.name='{}'";
+                    break;
+                case "Investigation":
+                    whereClause = " WHERE dataset.investigation.facility.name='{}' AND dataset.investigation.title='{}'";
+                    break;
+                case "Instrument":
+                    whereClause =  " WHERE entity.facility.name='{}'";
+                    if(!includeTopLevel){
+                        whereClause = "WHERE entity.facility.name='{}' AND entity.name='{}'";
+                    }
+                    whereClause = StringUtils.replaceOnce(whereClause, CURLY_BRACES, Utils.escapeStringForIcatQuery(icatEntityNames.getFacilityName()));
+                    whereClause = StringUtils.replaceOnce(whereClause, CURLY_BRACES, Utils.escapeStringForIcatQuery(icatEntityNames.getInstrumentName()));
+                default:
+                   
+                    
+                 
+        }
+        
+        
+       
+        return whereClause;
+                    
+        
     }
 
     private static String createWhereClause(IcatEntityNames icatEntityNames, DatafileSearchType datafileSearchType, boolean includeTopLevel) {
@@ -679,6 +727,7 @@ public class IcatStore implements IWebdavStore {
         return results;
     }
 
+    @Override
     public void createFolder(String authString, String uri)
             throws WebdavException {
         LOG.trace("IcatStore.createFolder(" + uri + ")");
@@ -926,6 +975,7 @@ public class IcatStore implements IWebdavStore {
         return datafileList;
     }
 
+    @Override
     public void createResource(String authString, String uri)
             throws WebdavException {
         LOG.trace("IcatStore.createResource(" + uri + ")");
@@ -954,6 +1004,7 @@ public class IcatStore implements IWebdavStore {
         }
     }
 
+    @Override
     public long setResourceContent(String authString, String uri,
             InputStream is, String contentType, String characterEncoding)
             throws WebdavException {
@@ -1004,6 +1055,7 @@ public class IcatStore implements IWebdavStore {
         }
     }
 
+    @Override
     public void removeObject(String authString, String uri)
             throws WebdavException {
         LOG.trace("IcatStore.removeObject(" + uri + ")");
@@ -1070,6 +1122,37 @@ public class IcatStore implements IWebdavStore {
     private static IcatEntityNames getIcatEntityNames(String uri) {
         IcatEntityNames icatEntityNames = new IcatEntityNames();
         String[] uriParts = getUriParts(uri);
+        
+        int currentPosition = 0;        
+        
+        
+        for(String uriPoint : uriParts){ 
+            //Ignore initial root level.
+            if(!"".equals(uriPoint)){   
+                String entity = hierarchy.get(currentPosition).getEntity();
+                
+                switch (entity){
+                    case "Facility":
+                        icatEntityNames.setFacilityName(uriPoint);
+                        break;
+                    case "FacilityCycle":
+                        icatEntityNames.setCycleName(uriPoint);
+                        break;
+                    case "Instrument":
+                        icatEntityNames.setInstrumentName(uriPoint);
+                        break;    
+                    case "Investigation":
+                        icatEntityNames.setInvestigationName(uriPoint);
+                        break;                   
+                    case "Dataset":
+                        icatEntityNames.setDatasetName(uriPoint);
+                }
+            
+                currentPosition+=1;
+            }
+            
+        }
+        /*
         try {
             icatEntityNames.setFacilityName(uriParts[1]);
             icatEntityNames.setInvestigationName(uriParts[2]);
@@ -1089,6 +1172,7 @@ public class IcatStore implements IWebdavStore {
             // datafile level and just means that some of the members
             // of the IcatEntityNames object are left set to null
         }
+*/
         return icatEntityNames;
     }
 
