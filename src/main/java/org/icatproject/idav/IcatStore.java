@@ -75,8 +75,15 @@ public class IcatStore implements IWebdavStore {
     // lock to be used whenever access is being made to either of the session maps
     private static Object sessionMapsLock = new Object();
     
-    private static ArrayList<Member> hierarchy;
+    //Hierarchy specified by the user.
+    private static ArrayList<IcatEntity> hierarchy;
     
+    //ICAT Utility class for mapping entities
+    private static IcatMapper icatMapper;
+    
+    
+    
+    //Propert manager for parsing and exposing properties.
     private PropertyManager properties;
     
     // cached objects (frequently used and never changed)
@@ -99,6 +106,10 @@ public class IcatStore implements IWebdavStore {
             properties = new PropertyManager(Utils.PROPERTIES_FILENAME, Utils.HIERARCHY_FILENAME);
             
             hierarchy = properties.getHierarchy();
+            
+            icatMapper = new IcatMapper();
+            
+           
            
             // currently assuming that ICAT and IDS are on the same machine
             URL icatAndIdsServerURL = new URL(properties.getIcatUrl());
@@ -297,6 +308,10 @@ public class IcatStore implements IWebdavStore {
         int datafilesLevelDepth = getDatafilesLevelDepth(uri);
         LOG.debug("datafilesLevelDepth = " + datafilesLevelDepth);
         IcatEntityNames icatEntityNames = getIcatEntityNames(uri);
+        
+        
+        HashMap<String,String> icatEntityValues = getIcatEntityValues(uri);
+        
         String[] uriParts = getUriParts(uri);
           
                                
@@ -305,7 +320,7 @@ public class IcatStore implements IWebdavStore {
         //Deal with going from Root level being 0 and next levels being 1 more then they should.
         if(length>0) length -=1;
         
-        Member selectedMember = hierarchy.get(length);
+        IcatEntity selectedMember = hierarchy.get(length);
         
         if(selectedMember.getEntity()=="Datafile"){
             // search for datafiles in this dataset, investigation and facility
@@ -347,8 +362,10 @@ public class IcatStore implements IWebdavStore {
             icatQuery = StringUtils.replaceOnce(icatQuery, CURLY_BRACES, likeString);
             
         }else{
-            icatQuery = "SELECT entity."+selectedMember.getAttribute()+" FROM "+selectedMember.getEntity()+" entity ";
-            icatQuery += createWhereClause(length,hierarchy,icatEntityNames, true);
+            //icatQuery = "SELECT "+ selectedMember.getEntity().toLowerCase() +"." +selectedMember.getAttribute()+" FROM "+selectedMember.getEntity()+" "+ selectedMember.getEntity().toLowerCase();
+            //icatQuery += createWhereClause(length,hierarchy,icatEntityNames, true);
+            icatQuery = icatMapper.createQuery(hierarchy, icatEntityValues,length, true);
+            
         }
         
         LOG.debug("icatQuery = [" + icatQuery + "]");
@@ -420,10 +437,14 @@ public class IcatStore implements IWebdavStore {
     public StoredObject getStoredObject(String authString, String uri)
             throws WebdavException {
         LOG.trace("IcatStore.getStoredObject(" + uri + ")");
+        
+        HashMap<String,String> icatEntityValues = getIcatEntityValues(uri);
 
         String icatQuery;
        
         IcatEntityNames icatEntityNames = getIcatEntityNames(uri);
+        
+        
         
         String[] uriParts = getUriParts(uri);         
                                
@@ -432,7 +453,7 @@ public class IcatStore implements IWebdavStore {
         //Deal with going from Root level being 0 and next levels being 1 more then they should.
         if(length>1) length -=2;
         
-        Member selectedMember = hierarchy.get(length);
+        IcatEntity selectedMember = hierarchy.get(length);
         
         if(selectedMember.getEntity()=="Datafile"){
             icatQuery = "SELECT datafile from Datafile datafile" + createWhereClause(icatEntityNames, DatafileSearchType.EQUALS);
@@ -476,7 +497,7 @@ public class IcatStore implements IWebdavStore {
             }        
         }else{
             icatQuery = "SELECT entity FROM "+selectedMember.getEntity()+" entity ";
-            icatQuery += createWhereClause(length,hierarchy,icatEntityNames, false);
+            icatQuery = icatMapper.createQuery(hierarchy, icatEntityValues,length, false);
             
             LOG.debug("icatQuery = [" + icatQuery + "]");
             List<Object> results = doIcatSearch(authString, icatQuery);
@@ -597,7 +618,7 @@ public class IcatStore implements IWebdavStore {
         return so;
     }
     
-    private static String createWhereClause(int uriPosition, List<Member> hierarchy, IcatEntityNames icatEntityNames, boolean includeTopLevel ){
+    private static String createWhereClause(int uriPosition, List<IcatEntity> hierarchy, IcatEntityNames icatEntityNames, boolean includeTopLevel ){
         String whereClause = " ";
         String entity = hierarchy.get(uriPosition).getEntity();
         
@@ -1116,6 +1137,48 @@ public class IcatStore implements IWebdavStore {
                 throw new WebdavException(message, e);
             }
         }
+
+    }
+    
+    private HashMap<String,String> getIcatEntityValues(String uri){
+        
+        HashMap<String,String> icatEntityValues = new HashMap();
+        
+        String[] uriParts = getUriParts(uri);
+        
+        int currentPosition = 0; 
+        
+        for(String uriPoint : uriParts){ 
+            //Ignore initial root level.
+            if(!"".equals(uriPoint)){   
+                String entity = hierarchy.get(currentPosition).getEntity();
+                
+                switch (entity){
+                    case "Facility":
+                        icatEntityValues.put("Facility", uriPoint);
+                        break;
+                    case "FacilityCycle":
+                        icatEntityValues.put("FacilityCycle", uriPoint);
+                        break;
+                    case "Instrument":
+                        icatEntityValues.put("Instrument", uriPoint);
+                        break;    
+                    case "Investigation":
+                        icatEntityValues.put("Investigation", uriPoint);
+                        break;                   
+                    case "Dataset":
+                        icatEntityValues.put("Dataset", uriPoint);
+                        break;
+                    case "Datafile":
+                        icatEntityValues.put("Datafile", uriPoint);
+                }
+            
+                currentPosition+=1;
+            }
+            
+        }
+        
+        return icatEntityValues;  
 
     }
 

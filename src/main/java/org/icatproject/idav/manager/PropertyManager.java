@@ -9,15 +9,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
-import java.util.logging.Level;
-import org.icatproject.idav.Member;
+import org.icatproject.idav.IcatEntity;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -37,7 +33,7 @@ public class PropertyManager {
     private String investigationTypeName;
     private String datasetTypeName;
     private String datafileFormatName;
-    private ArrayList<Member> hierarchy;
+    private ArrayList<IcatEntity> hierarchy;
 
     public PropertyManager(String propertyFile, String hierarchyFile) {
         collectProperties(propertyFile);
@@ -94,11 +90,11 @@ public class PropertyManager {
     /**
      * Passes the hierarchy JSON file and places it in an ArrayList containing Members.
      * @param fileName name of the file to parse.
-     * @return an ArrayList of Member objects in the order required.
+     * @return an ArrayList of IcatEntity objects in the order required.
      */
-    public ArrayList<Member> parseHierarchyFile(String fileName){
+    public ArrayList<IcatEntity> parseHierarchyFile(String fileName){
         
-        ArrayList<Member> temp = new ArrayList<>();
+        ArrayList<IcatEntity> temp = new ArrayList<>();
         
         try {
             JSONParser parser = new JSONParser();
@@ -110,7 +106,7 @@ public class PropertyManager {
                
                 JSONObject entity = (JSONObject) hierarchyPoint;
                 
-                Member member  = new Member(entity.get("entity").toString(),entity.get("attribute").toString());
+                IcatEntity member  = new IcatEntity(entity.get("entity").toString(),entity.get("attribute").toString());
                 temp.add(member);        
                 
             
@@ -122,11 +118,11 @@ public class PropertyManager {
         return temp;
     }
 
-    public ArrayList<Member> getHierarchy() {
+    public ArrayList<IcatEntity> getHierarchy() {
         return hierarchy;
     }
 
-    public void setHierarchy(ArrayList<Member> hierarchy) {
+    public void setHierarchy(ArrayList<IcatEntity> hierarchy) {
         this.hierarchy = hierarchy;
     }
     
