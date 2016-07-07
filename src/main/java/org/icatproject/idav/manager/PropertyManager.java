@@ -107,6 +107,11 @@ public class PropertyManager {
                 JSONObject entity = (JSONObject) hierarchyPoint;
                 
                 IcatEntity member  = new IcatEntity(entity.get("entity").toString(),entity.get("attribute").toString());
+                //Only add for specific case
+                if("Investigation".equals(member.getEntity())){
+                    member.setColumnCombineValue(entity.get("columnCombineValue").toString());
+                }
+                
                 temp.add(member);        
                 
             

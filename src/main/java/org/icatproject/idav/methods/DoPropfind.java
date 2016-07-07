@@ -293,7 +293,8 @@ public class DoPropfind extends AbstractMethod {
         if ((isFolder) && (!href.endsWith("/")))
             href += "/";
 
-        generatedXML.writeText(rewriteUrl(href));
+        generatedXML.writeText(
+                (href));
 
         generatedXML.writeElement("DAV::href", XMLWriter.CLOSING);
 

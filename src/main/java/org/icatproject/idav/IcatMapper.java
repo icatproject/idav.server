@@ -6,8 +6,9 @@
 package org.icatproject.idav;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
+import org.apache.commons.lang3.StringUtils;
+
 
 /**
  *
@@ -36,52 +37,129 @@ public class IcatMapper {
         //Facility Mapping
         tempMap.put("Facility-Investigation"," JOIN investigation.facility facility ");
         tempMap.put("Facility-Instrument"," JOIN instrument.facility facility ");
+        tempMap.put("Facility-FacilityCycle"," JOIN facilityCycle.facility facility ");
         
         //Instrument Mapping
         tempMap.put("Instrument-Investigation",INSTRUMENT_INVESTIGATION);
         tempMap.put("Instrument-Dataset"," JOIN dataset.investigation investigation " + INSTRUMENT_INVESTIGATION);
         tempMap.put("Instrument-Datafile", GENERAL_MAPPING+INSTRUMENT_INVESTIGATION);
+        tempMap.put("Instrument-FacilityCycle"," JOIN facilityCycle.facility facility JOIN facility.instruments instrument ");
         
+        //Facility Cycle mapping
+        tempMap.put("FacilityCycle-Instrument"," JOIN instrument.facility facility JOIN facility.facilityCycles facilityCycle ");
+        tempMap.put("FacilityCycle-Investigation"," JOIN investigation.facility facility JOIN facility.facilityCycles facilityCycle ");
+        
+        //Facility Cycle
+        tempMap.put("Instrument-FacilityCycle-Investigation"," , investigation.facility as facility , facility.instruments as instrument , facility.facilityCycles as facilityCycle , investigation.investigationInstruments as investigationInstrumentPivot , investigationInstrumentPivot.instrument as investigationInstrument  ");
         icatMap = tempMap;
         
-    }
-          
+    }        
         
-        
-    public void IcatMapper(){
-        //Creates mapping between entities. Joins are in reverse as we are traversing down with identification info from behind.
-        icatMap = new HashMap<>();
-             
-        
-    }
+    
     
     public String createWhere(ArrayList<IcatEntity> hierarchy, HashMap<String,String> icatEntityValues, int currentPosition, boolean child){  
         
         String where = " WHERE ";
         
-        IcatEntity parentEntity = hierarchy.get(currentPosition-1);         
+        IcatEntity parentEntity = hierarchy.get(currentPosition-1);  
+        IcatEntity childEntity = hierarchy.get(currentPosition);
         
-        if(!child){
-            IcatEntity childEntity = hierarchy.get(currentPosition);
-            String childWhereValue = childEntity.getEntity().toLowerCase()+"."+childEntity.getAttribute()+"='"+icatEntityValues.get(childEntity.getEntity())+"'";
-            where+= childWhereValue +" AND ";
+        String childName = childEntity.getEntity();
+        String parentName = parentEntity.getEntity();
+        
+        
+        if(!child){   
+            String childWhereValue = "";
+            String childValue = icatEntityValues.get(childEntity.getEntity());
+            
+            
+            //Handle the possible combined columns
+            if(childName.equals("Investigation")){
+                //If combined columns split the name and visit id  
+                if(childValue.contains(childEntity.getColumnCombineValue())){
+                    String[] investigationValues = childValue.split(childEntity.getColumnCombineValue());
+                    
+                    childWhereValue = " investigation.name='"+investigationValues[0].trim()+"' AND investigation.visitId='"+investigationValues[1].trim()+"'";            
+                }
+                
+            }
+            else if(childName.equals("Dataset")||childName.equals("Datafile")){
+                
+                if(parentName.equals("Investigation")){
+                    String parentValue = icatEntityValues.get(parentName);
+                    //If combined columns split the name and visit id  
+                    if(parentValue.contains(parentEntity.getColumnCombineValue())){
+                        String[] investigationValues = parentValue.split(parentEntity.getColumnCombineValue());
+                        childWhereValue = " investigation.name='"+investigationValues[0].trim()+"' AND investigation.visitId='"+investigationValues[1].trim()+"' AND ";                        
+                    }
+                   
+                }
+                
+                childWhereValue += StringUtils.uncapitalize(childEntity.getEntity())+"."+childEntity.getAttribute()+"='"+childValue+"'";
+                
+                
+            }
+            else{
+               childWhereValue = StringUtils.uncapitalize(childEntity.getEntity())+"."+childEntity.getAttribute()+"='"+childValue+"'";
+            }
+            
+            where += childWhereValue;
+            
+            
+        }else{
+            //If parent is FacilityCycle want to do between startDate and endDate of child entity.
+            if(parentEntity.getEntity().equals("FacilityCycle")){   
+                IcatEntity grandParentEntity = hierarchy.get(currentPosition-2);
+                String parentWhereValue = StringUtils.uncapitalize(grandParentEntity.getEntity())+"."+grandParentEntity.getAttribute()+"='"+icatEntityValues.get(grandParentEntity.getEntity())+"' AND facilityCycle.name='"+icatEntityValues.get(parentEntity.getEntity())+"' AND investigationInstrument.name= instrument.name AND  "+StringUtils.uncapitalize(childEntity.getEntity())+".startDate BETWEEN facilityCycle.startDate AND facilityCycle.endDate ";
+                where+=parentWhereValue;
+            }
+            else{
+                String parentWhereValue ="";
+                String parentValue = icatEntityValues.get(parentEntity.getEntity());
+                
+                if(parentEntity.getEntity().equals("Investigation")&&!parentEntity.getColumnCombineValue().equals("")){
+                    
+                    
+                    String[] investigationValues = parentValue.split(parentEntity.getColumnCombineValue());
+                    
+                    parentWhereValue = " investigation.name='"+investigationValues[0].trim()+"' AND investigation.visitId='"+investigationValues[1].trim()+"'"; 
+                }
+                else{
+                    parentWhereValue =  StringUtils.uncapitalize(parentEntity.getEntity())+"."+parentEntity.getAttribute()+"='"+parentValue+"'"; 
+                }
+                
+                where+=parentWhereValue;
+            }
         }
-        
-        String parentWhereValue =  parentEntity.getEntity().toLowerCase()+"."+parentEntity.getAttribute()+"='"+icatEntityValues.get(parentEntity.getEntity())+"'"; 
-        where+=parentWhereValue;
         
         return where;
         
     }
     
-    public String createJoin(ArrayList<IcatEntity> hierarchy, int currentPosition){      
+    public String createJoin(ArrayList<IcatEntity> hierarchy, int currentPosition, boolean child){      
+        
+                
+        String join = "";
+        String key = "";
         
         IcatEntity childEntity = hierarchy.get(currentPosition);
-        IcatEntity parentEntity = hierarchy.get(currentPosition-1);     
-         
-        String key = parentEntity.getEntity()+"-"+childEntity.getEntity();
+        IcatEntity parentEntity = hierarchy.get(currentPosition-1); 
+        
+        
+        if(parentEntity.getEntity().equals("FacilityCycle")){
+            IcatEntity grandParentEntity = hierarchy.get(currentPosition-2);
             
-        String join = icatMap.get(key);
+            key = grandParentEntity.getEntity()+"-"+parentEntity.getEntity()+"-"+childEntity.getEntity();
+        }
+        else if(){;,
+            key = parentEntity.getEntity()+"-"+childEntity.getEntity();
+        }
+              
+         
+        
+            
+        join = icatMap.get(key);
+        
         
         return join;
     }
@@ -93,11 +171,21 @@ public class IcatMapper {
         String finalQuery = "";
         String select = "SELECT ";
         
+        String entityName = entity.getEntity();
+        
+        
+        //Child is if we need to get all children else we only need the specific entity.
         if(child){
-            select += entity.getEntity().toLowerCase() +"." +entity.getAttribute()+" FROM "+entity.getEntity()+" "+ entity.getEntity().toLowerCase();
+            //If combined columns required to hold uniqueness then need to combine visitId and Name
+            if(entityName.equals("Investigation")&&!entity.getColumnCombineValue().equals("")){
+                select = "SELECT investigation FROM Investigation investigation ";
+            }
+            else{
+                select += StringUtils.uncapitalize(entityName)+"." +entity.getAttribute()+" FROM "+entity.getEntity()+" "+ StringUtils.uncapitalize(entityName);
+            }
         }
         else{
-            select += entity.getEntity().toLowerCase() +" FROM "+entity.getEntity()+" "+ entity.getEntity().toLowerCase();
+            select += StringUtils.uncapitalize(entityName)+" FROM "+entity.getEntity()+" "+ StringUtils.uncapitalize(entityName);
         }
         
         
@@ -106,7 +194,11 @@ public class IcatMapper {
         
         //Only do Join and where if past root.
         if(currentPosition>0){
-            finalQuery+= createJoin(hierarchy,currentPosition);
+            //Only need a join if getting all the children or a Dataset or Datafile.
+            if(child||entityName.equals("Dataset")||entityName.equals("Datafile")){
+                 finalQuery+= createJoin(hierarchy,currentPosition,child);
+            }
+           
             finalQuery+= createWhere(hierarchy,icatEntityValues,currentPosition,child);
         }
         

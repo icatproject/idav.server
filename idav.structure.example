@@ -1,4 +1,4 @@
-"hierarchy" :[
+[
 	{
 		"entity":"Facility",
 		"attribute":"name"

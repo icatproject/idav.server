@@ -10,12 +10,21 @@ public class IcatEntity {
     
     private String entity;
     private String attribute; 
+    private String columnCombineValue;
 
     public IcatEntity(String entity, String attribute) {
         this.entity = entity;
         this.attribute = attribute;
     }
-  
+
+    public String getColumnCombineValue() {
+        return columnCombineValue;
+    }
+
+    public void setColumnCombineValue(String columnCombineValue) {
+        this.columnCombineValue = columnCombineValue;
+    }
+     
                 
     public String getEntity() {
         return entity;
