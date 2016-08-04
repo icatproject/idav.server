@@ -4,7 +4,7 @@
 		"attribute":"name"
 	},
 	{
-		"entity":"Instrment",
+		"entity":"Instrument",
 		"attribute":"name"
 	},
 	{
@@ -14,7 +14,7 @@
 	{
 		"entity":"Investigation",
 		"attribute":"title",
-		"columnCombine":" visitId ",
+		"columnCombineValue":" visitId ",
 	},
 	{
 		"entity":"Dataset",
