@@ -143,6 +143,7 @@ public class IcatStore implements IWebdavStore {
         // The method takes longer when a new ICAT login or session refresh is required
         // but these operations are also very quick and infrequent (every 2 hours)
         // so for now this is a small price to pay for making the session maps "safe".
+        LOG.debug("Getting session ID");
         Date methodStartDate = new Date();
         synchronized (sessionMapsLock) {
             Date now = new Date();
@@ -190,6 +191,7 @@ public class IcatStore implements IWebdavStore {
     }
 
     private void doIcatLogin(String authString) throws UnauthenticatedException {
+        LOG.debug("Logging into ICAT");
         // note that calls from getIcatSessionId() will not be blocked because they are in the same thread
         // but calls from doIcatSearch(), for example, will be blocked - which is what we want
         synchronized (sessionMapsLock) {
@@ -259,6 +261,7 @@ public class IcatStore implements IWebdavStore {
 
     @Override
     public List<String> getSessionInfo() {
+        LOG.debug("Getting session info");
         // this method is most likely to cause ConcurrentModificationExceptions
         // and because it is only called extremely infrequently, it seems
         // sensible to make it as safe as possible
@@ -313,12 +316,14 @@ public class IcatStore implements IWebdavStore {
 
         IcatEntity selectedEntity = hierarchy.get(length);
         HashMap<String, String> icatEntityValues = getIcatEntityValues(uri);
+        
+        LOG.info("Have selected: " + selectedEntity.getEntity()); 
 
         if (selectedEntity.getEntity().equals("FacilityCycle")) {
             icatEntityValues = getFacilityCycleDates(authString, icatEntityValues);
         }
 
-        if (selectedEntity.getEntity() == "Datafile") {
+        if (selectedEntity.getEntity().equals("Datafile")) {
             // search for datafiles in this dataset, investigation and facility
 //    		icatQuery = "SELECT datafile.name from Datafile datafile" + createWhereClause(icatEntityNames);
             // NOTE: for some reason this query is particularly slow (not always but often 5-10 secs or more).
@@ -328,11 +333,26 @@ public class IcatStore implements IWebdavStore {
             // and then getting all the datafiles for that dataset ID
             icatQuery = "SELECT dataset.id FROM Dataset dataset "
                     + "WHERE dataset.investigation.facility.name='{}' "
-                    + "AND dataset.investigation.title='{}' "
-                    + "AND dataset.name='{}'";
+                    + "AND dataset.investigation.name='{}' "
+                    + "AND dataset.name='{}'"
+                    + "AND dataset.investigation.visitId='{}'";
+            // Replace the curly braces in the above query to have the correct values
             icatQuery = StringUtils.replaceOnce(icatQuery, CURLY_BRACES, Utils.escapeStringForIcatQuery(icatEntityNames.getFacilityName()));
-            icatQuery = StringUtils.replaceOnce(icatQuery, CURLY_BRACES, Utils.escapeStringForIcatQuery(icatEntityNames.getInvestigationName()));
+            String investigationName = Utils.escapeStringForIcatQuery(icatEntityNames.getInvestigationName());
+            int spaceIndex = investigationName.indexOf(" ");
+            String visitName = "";
+            int visitIndex = investigationName.indexOf("visitId") + 9;
+            if (spaceIndex != -1)
+            {
+                visitName = investigationName.substring(visitIndex, investigationName.length());
+                LOG.info("Visit name = " + visitName);
+                investigationName = investigationName.substring(0, spaceIndex);
+                LOG.info("Investigation name = " + investigationName);
+                
+            }
+            icatQuery = StringUtils.replaceOnce(icatQuery, CURLY_BRACES, investigationName);
             icatQuery = StringUtils.replaceOnce(icatQuery, CURLY_BRACES, Utils.escapeStringForIcatQuery(icatEntityNames.getDatasetName()));
+            icatQuery = StringUtils.replaceOnce(icatQuery, CURLY_BRACES, visitName);
             LOG.debug("icatQuery = [" + icatQuery + "]");
             List<Object> results = doIcatSearch(authString, icatQuery);
             if (results.size() != 1) {
@@ -341,6 +361,7 @@ public class IcatStore implements IWebdavStore {
             }
             Long datasetId = (Long) results.get(0);
             icatQuery = "SELECT datafile.name FROM Datafile datafile WHERE datafile.dataset.id=" + datasetId;
+            /*
             if (datafilesLevelDepth == 0) {
                 icatQuery += " AND datafile.name NOT LIKE '{}'";
             } else {
@@ -356,6 +377,7 @@ public class IcatStore implements IWebdavStore {
             }
             likeString += "%";
             icatQuery = StringUtils.replaceOnce(icatQuery, CURLY_BRACES, likeString);
+            */
 
         } else {
             //icatQuery = "SELECT "+ selectedEntity.getEntity().toLowerCase() +"." +selectedEntity.getAttribute()+" FROM "+selectedEntity.getEntity()+" "+ selectedEntity.getEntity().toLowerCase();
@@ -363,11 +385,18 @@ public class IcatStore implements IWebdavStore {
             icatQuery = icatMapper.createQuery(hierarchy, icatEntityValues, length, true);
 
         }
-
+        
         LOG.debug("icatQuery = [" + icatQuery + "]");
+        
         List<Object> results = doIcatSearch(authString, icatQuery);
+        
+        LOG.info("Found " + results.size() + " results");
+        
+        for (Object o : results) {
+            LOG.debug(o.toString());
+        }
 
-        //Need to comebine columns if the entity is investigation and combine value isn't empty.
+        //Need to combine columns if the entity is investigation and combine value isn't empty.
         if (selectedEntity.getEntity().equals("Investigation") && !selectedEntity.getColumnCombineValue().equals("")) {
             String combineValue = selectedEntity.getColumnCombineValue();
             String[] resultsStringArray = new String[results.size()];
@@ -497,12 +526,14 @@ public class IcatStore implements IWebdavStore {
         String[] uriParts = getUriParts(uri);
 
         int length = uriParts.length;
-
+        
         //Deal with going from Root level being 0 and next levels being 1 more then they should.
         if (length > 1) {
             length -= 2;
         }
-
+        
+        LOG.debug("Length = " + length);
+        
         IcatEntity selectedMember = hierarchy.get(length);
 
         HashMap<String, String> icatEntityValues = getIcatEntityValues(uri);
@@ -553,11 +584,19 @@ public class IcatStore implements IWebdavStore {
 
             LOG.debug("icatQuery = [" + icatQuery + "]");
             List<Object> results = doIcatSearch(authString, icatQuery);
+            
+            
+            if (results.isEmpty()) {
+                LOG.info("Found no results in ICAT, trying a different query");
+                icatQuery = icatQuery.replaceAll("-", "/");
+                LOG.debug("icatQuery = [" + icatQuery + "]");
+                results = doIcatSearch(authString, icatQuery);
+            }
             if (results.size() == 1) {
+                LOG.debug("Found " + results.size() + " results in ICAT");
                 EntityBaseBean bean = (EntityBaseBean) results.get(0);
                 return createFolderStoredObject(bean.getCreateTime(), bean.getModTime());
-            }
-
+            }  
         }
 
         /*
@@ -777,6 +816,7 @@ public class IcatStore implements IWebdavStore {
     // Potentially all other ICAT calls need this functionality added as well but seeing as
     // this is by far the most frequently called this is the most important place to have it.
     private List<Object> doIcatSearch(String authString, String icatQuery) throws WebdavException {
+        LOG.debug("Searching the ICAT");
         List<Object> results = null;
         try {
             results = icatEP.search(getIcatSessionId(authString), icatQuery);
@@ -948,6 +988,7 @@ public class IcatStore implements IWebdavStore {
     }
 
     private Instrument getInstrument(String authString) throws WebdavException {
+        LOG.debug("Getting intrument data");
         if (instrument == null) {
             LOG.info("Getting instrument from ICAT");
             String icatQuery = "SELECT inst from Instrument inst WHERE inst.name='" + properties.getInstrumentName() + "'";
@@ -966,6 +1007,7 @@ public class IcatStore implements IWebdavStore {
     // NOTE: getFacility, getInvestigation and getDataset need the INCLUDE 1 
     // for when a rename is being done and the icatEP.update() method is being called
     private Facility getFacility(String authString, IcatEntityNames icatEntityNames) throws WebdavException {
+        LOG.debug("Getting facility data");
         Facility fac = null;
         String icatQuery = "SELECT facility from Facility facility" + createWhereClause(icatEntityNames, false) + " INCLUDE 1";
         LOG.debug("icatQuery = [" + icatQuery + "]");
@@ -980,6 +1022,7 @@ public class IcatStore implements IWebdavStore {
     }
 
     private Investigation getInvestigation(String authString, IcatEntityNames icatEntityNames) throws WebdavException {
+        LOG.debug("Getting investigation data");
         Investigation inv = null;
         String icatQuery = "SELECT investigation from Investigation investigation" + createWhereClause(icatEntityNames, false) + " INCLUDE 1";
         LOG.debug("icatQuery = [" + icatQuery + "]");
@@ -994,6 +1037,7 @@ public class IcatStore implements IWebdavStore {
     }
 
     private Dataset getDataset(String authString, IcatEntityNames icatEntityNames) throws WebdavException {
+        LOG.debug("Getting dataset data");
         Dataset dataset = null;
         String icatQuery = "SELECT dataset from Dataset dataset" + createWhereClause(icatEntityNames, false) + " INCLUDE 1";
         LOG.debug("icatQuery = [" + icatQuery + "]");
@@ -1008,6 +1052,7 @@ public class IcatStore implements IWebdavStore {
     }
 
     private Datafile getDatafile(String authString, IcatEntityNames icatEntityNames) throws WebdavException {
+        LOG.debug("Getting datafile data");
         Datafile datafile = null;
         String icatQuery = "SELECT datafile from Datafile datafile" + createWhereClause(icatEntityNames, DatafileSearchType.EQUALS);
         LOG.debug("icatQuery = [" + icatQuery + "]");
@@ -1023,6 +1068,7 @@ public class IcatStore implements IWebdavStore {
     }
 
     private List<Datafile> getDatafileAndChildren(String authString, IcatEntityNames icatEntityNames) throws WebdavException {
+        LOG.debug("Getting the datafile and children");
         // TODO - modify this query to escape any % chars in datafile names once this is fixed in ICAT
         String icatQuery = "SELECT df from Datafile df "
                 + "WHERE df.dataset.investigation.facility.name='" + Utils.escapeStringForIcatQuery(icatEntityNames.getFacilityName())
@@ -1194,6 +1240,7 @@ public class IcatStore implements IWebdavStore {
     }
 
     private HashMap<String, String> getIcatEntityValues(String uri) {
+        LOG.debug("Getting icat entity values");
 
         HashMap<String, String> icatEntityValues = new HashMap();
 
@@ -1217,7 +1264,7 @@ public class IcatStore implements IWebdavStore {
                         icatEntityValues.put("Instrument", uriPoint);
                         break;
                     case "Investigation":
-                        String processNamed = processCalibrationInvestigation(uriPoint, true);
+                        String processNamed = processCalibrationInvestigation(uriPoint, false);
                         icatEntityValues.put("Investigation", processNamed);
                         break;
                     case "Dataset":
@@ -1237,6 +1284,8 @@ public class IcatStore implements IWebdavStore {
     }
 
     private static IcatEntityNames getIcatEntityNames(String uri) {
+        LOG.debug("Getting icat entity names");
+        
         IcatEntityNames icatEntityNames = new IcatEntityNames();
         String[] uriParts = getUriParts(uri);
 
@@ -1246,7 +1295,6 @@ public class IcatStore implements IWebdavStore {
             //Ignore initial root level.
             if (!"".equals(uriPoint)) {
                 String entity = hierarchy.get(currentPosition).getEntity();
-
                 switch (entity) {
                     case "Facility":
                         icatEntityNames.setFacilityName(uriPoint);
@@ -1262,12 +1310,13 @@ public class IcatStore implements IWebdavStore {
                         break;
                     case "Dataset":
                         icatEntityNames.setDatasetName(uriPoint);
+                    case "Datafile":
+                        icatEntityNames.setDatafileName(uriPoint);
                 }
-
                 currentPosition += 1;
             }
-
         }
+        
         /*
         try {
             icatEntityNames.setFacilityName(uriParts[1]);
@@ -1293,6 +1342,8 @@ public class IcatStore implements IWebdavStore {
     }
 
     private static int getDatafilesLevelDepth(String uri) {
+        LOG.debug("Getting datafiles level depth");
+        
         int datafilesLevelDepth = -1;
         String[] uriParts = getUriParts(uri);
         if (uriParts.length >= DATAFILE_LEVEL) {
@@ -1302,6 +1353,7 @@ public class IcatStore implements IWebdavStore {
     }
 
     private static String[] getUriParts(String uri) {
+        LOG.debug("Getting URI parts");
         // when called with "/" this results in a zero length
         // array being returned
         // when called with "" (empty string) this results in an array

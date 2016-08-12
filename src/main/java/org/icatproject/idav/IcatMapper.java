@@ -141,6 +141,7 @@ public class IcatMapper {
     }
 
     public String createQuery(ArrayList<IcatEntity> hierarchy, HashMap<String, String> icatEntityValues, int currentPosition, boolean child) {
+        LOG.debug("Creating new query");
         IcatEntity entity = hierarchy.get(currentPosition);
 
         String finalQuery = "";

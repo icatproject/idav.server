@@ -143,6 +143,7 @@ public class DoGet extends DoHead {
                         childrenTemp.append("/");
                     }
                     childrenTemp.append("\">");
+                    // Change this part to allow for different naming of the folders 
                     childrenTemp.append(child);
                     childrenTemp.append("</a></td>");
                     if (obj.isFolder())
