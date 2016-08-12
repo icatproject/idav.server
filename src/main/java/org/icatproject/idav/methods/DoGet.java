@@ -108,6 +108,7 @@ public class DoGet extends DoHead {
             }
 
             if (so.isFolder()) {
+                LOG.debug("The object is a folder!");
                 // TODO some folder response (for browsers, DAV tools
                 // use propfind) in html?
                 DateFormat shortDF= getDateTimeFormat(req.getLocale());

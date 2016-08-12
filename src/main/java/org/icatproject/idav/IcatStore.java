@@ -535,16 +535,20 @@ public class IcatStore implements IWebdavStore {
         LOG.debug("Length = " + length);
         
         IcatEntity selectedMember = hierarchy.get(length);
-
+       
         HashMap<String, String> icatEntityValues = getIcatEntityValues(uri);
 
-        if (selectedMember.getEntity() == "Datafile") {
+        if (selectedMember.getEntity().equals("Datafile")) {
+            LOG.debug("Searching for a datafile...");
             icatQuery = "SELECT datafile from Datafile datafile" + createWhereClause(icatEntityNames, DatafileSearchType.EQUALS);
             LOG.debug("icatQuery = [" + icatQuery + "]");
 
             List<Object> results = doIcatSearch(authString, icatQuery);
+            
+            LOG.debug("Found " + results.size() + " results");
 
             if (results.size() == 1) {
+                LOG.debug("We have found the datafile!");
                 // we have found the datafile
                 Datafile df = (Datafile) results.get(0);
                 if (df.getDescription() != null && df.getDescription().equals(FOLDER)) {
@@ -579,7 +583,8 @@ public class IcatStore implements IWebdavStore {
                 }
             }
         } else {
-
+            LOG.info("Creating a new query");
+            
             icatQuery = icatMapper.createQuery(hierarchy, icatEntityValues, length, false);
 
             LOG.debug("icatQuery = [" + icatQuery + "]");
@@ -750,8 +755,8 @@ public class IcatStore implements IWebdavStore {
         String whereClause = null;
         if (icatEntityNames.getDatafileName() != null) {
             // DatafileSearchType needs to be a value other than NONE
-            whereClause = " WHERE datafile.dataset.investigation.facility.name='{}' AND datafile.dataset.investigation.title='{}'";
-            whereClause += " AND datafile.dataset.name='{}'";
+            whereClause = " WHERE datafile.dataset.investigation.facility.name='{}' AND datafile.dataset.investigation.name='{}'";
+            whereClause += " AND datafile.dataset.investigation.visitId='{}' AND datafile.dataset.name='{}'";
             if (datafileSearchType == DatafileSearchType.EQUALS) {
                 whereClause += " AND datafile.name='{}'";
             } else if (datafileSearchType == DatafileSearchType.LIKE) {
@@ -785,11 +790,25 @@ public class IcatStore implements IWebdavStore {
         // facility should never be null
         // StringUtils.replaceOnce is used instead of String.replaceFirst because it does literal string replacement
         // replaceFirst uses regular expressions which causes problems with characters like $
+        
         whereClause = StringUtils.replaceOnce(whereClause, CURLY_BRACES, Utils.escapeStringForIcatQuery(icatEntityNames.getFacilityName()));
-
         if (icatEntityNames.getInvestigationName() != null) {
-            whereClause = StringUtils.replaceOnce(whereClause, CURLY_BRACES, Utils.escapeStringForIcatQuery(icatEntityNames.getInvestigationName()));
+            String investigationName = Utils.escapeStringForIcatQuery(icatEntityNames.getInvestigationName());
+            int spaceIndex = investigationName.indexOf(" ");
+            String visitName = "";
+            int visitIndex = investigationName.indexOf("visitId") + 9;
+            if (spaceIndex != -1)
+            {
+                visitName = investigationName.substring(visitIndex, investigationName.length());
+                LOG.info("Visit name = " + visitName);
+                investigationName = investigationName.substring(0, spaceIndex);
+                LOG.info("Investigation name = " + investigationName);
+                
+            }
+            whereClause = StringUtils.replaceOnce(whereClause, CURLY_BRACES, investigationName);
+            whereClause = StringUtils.replaceOnce(whereClause, CURLY_BRACES, visitName);
         }
+        
         if (icatEntityNames.getDatasetName() != null) {
             whereClause = StringUtils.replaceOnce(whereClause, CURLY_BRACES, Utils.escapeStringForIcatQuery(icatEntityNames.getDatasetName()));
         }
@@ -1353,7 +1372,7 @@ public class IcatStore implements IWebdavStore {
     }
 
     private static String[] getUriParts(String uri) {
-        LOG.debug("Getting URI parts");
+        LOG.debug("Getting URI parts for " + uri);
         // when called with "/" this results in a zero length
         // array being returned
         // when called with "" (empty string) this results in an array
