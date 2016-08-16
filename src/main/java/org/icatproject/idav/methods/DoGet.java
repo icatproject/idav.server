@@ -108,7 +108,6 @@ public class DoGet extends DoHead {
             }
 
             if (so.isFolder()) {
-                LOG.debug("The object is a folder!");
                 // TODO some folder response (for browsers, DAV tools
                 // use propfind) in html?
                 DateFormat shortDF= getDateTimeFormat(req.getLocale());
@@ -144,8 +143,15 @@ public class DoGet extends DoHead {
                         childrenTemp.append("/");
                     }
                     childrenTemp.append("\">");
-                    // Change this part to allow for different naming of the folders 
-                    childrenTemp.append(child);
+                    // Change this part to allow for different naming of the folders
+                    if (child.contains(":")) {
+                        String replace = child.replaceAll(":","-");
+                        childrenTemp.append(replace);
+                    }
+                    else {
+                        childrenTemp.append(child);
+                    }
+                    
                     childrenTemp.append("</a></td>");
                     if (obj.isFolder())
                     {

@@ -300,6 +300,21 @@ public class IcatStore implements IWebdavStore {
     public String[] getChildrenNames(String authString, String uri)
             throws WebdavException {
         LOG.trace("IcatStore.getChildrenNames(" + uri + ")");
+        
+        StringBuilder builder = new StringBuilder(uri);
+        int count = 0;
+        if (!uri.contains(":")) {
+            for (int i = 0; i < uri.length(); i++) {
+                if (uri.charAt(i) == '-') {
+                    if (count >= 2 && count < 4) {
+                        builder.setCharAt(i, ':');
+                    }
+                    count ++;
+                }
+            }
+            uri = builder.toString();
+        }
+        
         String icatQuery = null;
         int datafilesLevelDepth = getDatafilesLevelDepth(uri);
         LOG.debug("datafilesLevelDepth = " + datafilesLevelDepth);
@@ -339,14 +354,13 @@ public class IcatStore implements IWebdavStore {
             // Replace the curly braces in the above query to have the correct values
             icatQuery = StringUtils.replaceOnce(icatQuery, CURLY_BRACES, Utils.escapeStringForIcatQuery(icatEntityNames.getFacilityName()));
             String investigationName = Utils.escapeStringForIcatQuery(icatEntityNames.getInvestigationName());
-            int spaceIndex = investigationName.indexOf(" ");
             String visitName = "";
             int visitIndex = investigationName.indexOf("visitId") + 9;
-            if (spaceIndex != -1)
+            if (visitIndex != -1)
             {
                 visitName = investigationName.substring(visitIndex, investigationName.length());
                 LOG.info("Visit name = " + visitName);
-                investigationName = investigationName.substring(0, spaceIndex);
+                investigationName = investigationName.substring(0, visitIndex - 11);
                 LOG.info("Investigation name = " + investigationName);
                 
             }
@@ -355,46 +369,74 @@ public class IcatStore implements IWebdavStore {
             icatQuery = StringUtils.replaceOnce(icatQuery, CURLY_BRACES, visitName);
             LOG.debug("icatQuery = [" + icatQuery + "]");
             List<Object> results = doIcatSearch(authString, icatQuery);
+            
+            // If there are no results, trying querying with '/' instead of '-' or vice versa
+            if (results.isEmpty()) {
+                LOG.info("Found no results in ICAT, trying a different query");
+                icatQuery = "SELECT dataset.id FROM Dataset dataset "
+                    + "WHERE dataset.investigation.facility.name='{}' "
+                    + "AND dataset.investigation.name='{}' "
+                    + "AND dataset.name='{}'"
+                    + "AND dataset.investigation.visitId='{}'";
+                // Replace the curly braces in the above query to have the correct values
+                icatQuery = StringUtils.replaceOnce(icatQuery, CURLY_BRACES, Utils.escapeStringForIcatQuery(icatEntityNames.getFacilityName()));
+                investigationName = Utils.escapeStringForIcatQuery(icatEntityNames.getInvestigationName());
+                visitName = "";
+                visitIndex = investigationName.indexOf("visitId") + 9;
+                if (visitIndex != -1)
+                {
+                    visitName = investigationName.substring(visitIndex, investigationName.length());
+                    LOG.info("Visit name = " + visitName);
+                    investigationName = investigationName.substring(0, visitIndex - 11);
+                    LOG.info("Investigation name = " + investigationName);
+                }
+
+                if (investigationName.contains("-")) {
+                    investigationName = investigationName.replaceAll("-", "/");
+                }
+                else {
+                    investigationName = investigationName.replaceAll("/", "-");
+                }
+
+                icatQuery = StringUtils.replaceOnce(icatQuery, CURLY_BRACES, investigationName);
+                icatQuery = StringUtils.replaceOnce(icatQuery, CURLY_BRACES, Utils.escapeStringForIcatQuery(icatEntityNames.getDatasetName()));
+                icatQuery = StringUtils.replaceOnce(icatQuery, CURLY_BRACES, visitName);
+                icatQuery = icatQuery.replaceAll("-", "/");
+                LOG.debug("icatQuery = [" + icatQuery + "]");
+                results = doIcatSearch(authString, icatQuery);
+            }
+            
             if (results.size() != 1) {
                 LOG.error(results.size() + " results returned from icatQuery '" + icatQuery + "' - expected 1");
                 throw new WebdavException("Error finding dataset");
             }
             Long datasetId = (Long) results.get(0);
             icatQuery = "SELECT datafile.name FROM Datafile datafile WHERE datafile.dataset.id=" + datasetId;
-            /*
-            if (datafilesLevelDepth == 0) {
-                icatQuery += " AND datafile.name NOT LIKE '{}'";
-            } else {
-                // re-combine all of the parts beyond DATAFILE_LEVEL
-                // and add datafile.name like 'datafilepath%' to the query
-                icatQuery += " AND datafile.name LIKE '"
-                        + Utils.escapeStringForIcatQuery(icatEntityNames.getDatafileName())
-                        + "/%' AND datafile.name NOT LIKE '{}'";
-            }
-            String likeString = "%/";
-            for (int i = 0; i < datafilesLevelDepth; i++) {
-                likeString += "%/";
-            }
-            likeString += "%";
-            icatQuery = StringUtils.replaceOnce(icatQuery, CURLY_BRACES, likeString);
-            */
 
         } else {
-            //icatQuery = "SELECT "+ selectedEntity.getEntity().toLowerCase() +"." +selectedEntity.getAttribute()+" FROM "+selectedEntity.getEntity()+" "+ selectedEntity.getEntity().toLowerCase();
-            //icatQuery += createWhereClause(length,hierarchy,icatEntityNames, true);
+            LOG.debug("Creating new query");
             icatQuery = icatMapper.createQuery(hierarchy, icatEntityValues, length, true);
-
         }
-        
+
         LOG.debug("icatQuery = [" + icatQuery + "]");
         
         List<Object> results = doIcatSearch(authString, icatQuery);
         
-        LOG.info("Found " + results.size() + " results");
-        
-        for (Object o : results) {
-            LOG.debug(o.toString());
+        // If there are no results, try a new query with - instead of / or vice versa
+        if (results.isEmpty()) {
+            LOG.info("Found no results in ICAT, trying a different query");
+            if (icatQuery.contains("-")) {
+                icatQuery = icatQuery.replaceAll("-", "/");
+            }
+            else {
+                icatQuery = icatQuery.replaceAll("/", "-");
+            }
+            
+            LOG.debug("icatQuery = [" + icatQuery + "]");
+            results = doIcatSearch(authString, icatQuery);
         }
+        
+        LOG.info("Found " + results.size() + " results");
 
         //Need to combine columns if the entity is investigation and combine value isn't empty.
         if (selectedEntity.getEntity().equals("Investigation") && !selectedEntity.getColumnCombineValue().equals("")) {
@@ -520,7 +562,22 @@ public class IcatStore implements IWebdavStore {
         LOG.trace("IcatStore.getStoredObject(" + uri + ")");
 
         String icatQuery;
-
+        
+        StringBuilder builder = new StringBuilder(uri);
+        int count = 0;
+        
+        if (!uri.contains(":")) {
+            for (int i = 0; i < uri.length(); i++) {
+                if (uri.charAt(i) == '-') {
+                    if (count >= 2 && count < 4) {
+                        builder.setCharAt(i, ':');
+                    }
+                    count ++;
+                }
+            }
+            uri = builder.toString();
+        }
+        
         IcatEntityNames icatEntityNames = getIcatEntityNames(uri);
 
         String[] uriParts = getUriParts(uri);
@@ -532,18 +589,37 @@ public class IcatStore implements IWebdavStore {
             length -= 2;
         }
         
+        for (String a : uriParts) {
+            if (a.equals("desktop.ini")) {
+                return null;
+            }
+        }
+        
         LOG.debug("Length = " + length);
         
         IcatEntity selectedMember = hierarchy.get(length);
        
         HashMap<String, String> icatEntityValues = getIcatEntityValues(uri);
-
+        
         if (selectedMember.getEntity().equals("Datafile")) {
             LOG.debug("Searching for a datafile...");
             icatQuery = "SELECT datafile from Datafile datafile" + createWhereClause(icatEntityNames, DatafileSearchType.EQUALS);
+            
             LOG.debug("icatQuery = [" + icatQuery + "]");
 
             List<Object> results = doIcatSearch(authString, icatQuery);
+            
+            if (results.isEmpty()) {
+                LOG.info("Found no results in ICAT, trying a different query");
+                if (icatQuery.contains("-")) {
+                    icatQuery = icatQuery.replaceAll("-", "/");
+                }
+                else {
+                    icatQuery = icatQuery.replaceAll("/", "-");
+                }
+                LOG.debug("icatQuery = [" + icatQuery + "]");
+                results = doIcatSearch(authString, icatQuery);
+            }
             
             LOG.debug("Found " + results.size() + " results");
 
@@ -591,103 +667,25 @@ public class IcatStore implements IWebdavStore {
             List<Object> results = doIcatSearch(authString, icatQuery);
             
             
+            // If there are no results, try a new query with - instead of / or vice versa
             if (results.isEmpty()) {
                 LOG.info("Found no results in ICAT, trying a different query");
-                icatQuery = icatQuery.replaceAll("-", "/");
+                if (icatQuery.contains("-")) {
+                    icatQuery = icatQuery.replaceAll("-", "/");
+                }
+                else {
+                    icatQuery = icatQuery.replaceAll("/", "-");
+                }
+
                 LOG.debug("icatQuery = [" + icatQuery + "]");
                 results = doIcatSearch(authString, icatQuery);
             }
             if (results.size() == 1) {
-                LOG.debug("Found " + results.size() + " results in ICAT");
+                LOG.info("Found " + results.size() + " results in ICAT");
                 EntityBaseBean bean = (EntityBaseBean) results.get(0);
                 return createFolderStoredObject(bean.getCreateTime(), bean.getModTime());
             }  
         }
-
-        /*
-        if (uriParts.length == 0 || uriParts.length == 1) {
-            // this is the root of the server
-            // return a StoredObject with create and modified date set to now
-            Date now = new Date();
-            return createFolderStoredObject(now, now);
-//        } else if (uriParts.length == 1) {
-//    		// this should never happen (but it can if the uri is an empty string!)
-//    		String message = "Unable to handle uri: '" + uri + "'";
-//    		LOG.debug(message);
-//    		throw new WebdavException(message);
-        } else if (uriParts.length == 2) {
-            // check this Facility exists
-            icatQuery = "SELECT facility from Facility facility" + createWhereClause(icatEntityNames, false);
-            LOG.debug("icatQuery = [" + icatQuery + "]");
-            List<Object> results = doIcatSearch(authString, icatQuery);
-            if (results.size() == 1) {
-                Facility fac = (Facility) results.get(0);
-                return createFolderStoredObject(fac.getCreateTime(), fac.getModTime());
-            }
-        } else if (uriParts.length == 3) {
-            // check this Investigation exists
-            icatQuery = "SELECT investigation from Investigation investigation" + createWhereClause(icatEntityNames, false);
-            LOG.debug("icatQuery = [" + icatQuery + "]");
-            List<Object> results = doIcatSearch(authString, icatQuery);
-            if (results.size() == 1) {
-                Investigation inv = (Investigation) results.get(0);
-                return createFolderStoredObject(inv.getCreateTime(), inv.getModTime());
-            }
-        } else if (uriParts.length == 4) {
-            // check this Dataset exists
-            icatQuery = "SELECT dataset from Dataset dataset" + createWhereClause(icatEntityNames, false);
-            LOG.debug("icatQuery = [" + icatQuery + "]");
-            List<Object> results = doIcatSearch(authString, icatQuery);
-            if (results.size() == 1) {
-                Dataset ds = (Dataset) results.get(0);
-                return createFolderStoredObject(ds.getCreateTime(), ds.getModTime());
-            }
-        } else if (datafilesLevelDepth > -1) {
-            // this is either an actual datafile
-            // or a "virtual folder" within a datafile path
-
-            // search for an exact datafile match (not a "virtual folder") in this dataset, investigation and facility
-            icatQuery = "SELECT datafile from Datafile datafile" + createWhereClause(icatEntityNames, DatafileSearchType.EQUALS);
-            LOG.debug("icatQuery = [" + icatQuery + "]");
-
-            List<Object> results = doIcatSearch(authString, icatQuery);
-
-            if (results.size() == 1) {
-                // we have found the datafile
-                Datafile df = (Datafile) results.get(0);
-                if (df.getDescription() != null && df.getDescription().equals(FOLDER)) {
-                    // these are the virtual "FOLDER" datafiles created by IDAV 
-                    LOG.debug("Found virtual folder (via description) for uri: '" + uri + "'. Datafile: " + Utils.getDatafileAsShortString(df));
-                    // return a StoredObject with create and modified date set to now
-                    Date now = new Date();
-                    return createFolderStoredObject(now, now);
-                } else {
-                    LOG.debug("Found datafile for uri: '" + uri + "': " + Utils.getDatafileAsShortString(df));
-                    StoredObject so = new StoredObject();
-                    so.setFolder(false);
-                    so.setLastModified(df.getModTime().toGregorianCalendar().getTime());
-                    so.setCreationDate(df.getCreateTime().toGregorianCalendar().getTime());
-                    so.setResourceLength(df.getFileSize());
-                    return so;
-                }
-            } else {
-                // check whether it is a "virtual folder"
-                icatQuery = "SELECT count(datafile) from Datafile datafile" + createWhereClause(icatEntityNames, DatafileSearchType.LIKE);
-                LOG.debug("icatQuery = [" + icatQuery + "]");
-                results = doIcatSearch(authString, icatQuery);
-                long dfCount = (Long) results.get(0);
-                if (dfCount > 0L) {
-                    // these are virtual folders created by most ICAT ingestion processes
-                    // where there is at least one datafile with a name (path) beginning with
-                    // the datafile name we are looking for
-                    LOG.debug("Found virtual folder (via name like) for uri: '" + uri + "'");
-                    // return a StoredObject with create and modified date set to now
-                    Date now = new Date();
-                    return createFolderStoredObject(now, now);
-                }
-            }
-        }
-         */
         // if we have not found a match then a uri must have been
         // provided which doesn't map to an object (or virtual folder) in ICAT
         // return null such that a suitable response is generated by the calling method
@@ -794,16 +792,14 @@ public class IcatStore implements IWebdavStore {
         whereClause = StringUtils.replaceOnce(whereClause, CURLY_BRACES, Utils.escapeStringForIcatQuery(icatEntityNames.getFacilityName()));
         if (icatEntityNames.getInvestigationName() != null) {
             String investigationName = Utils.escapeStringForIcatQuery(icatEntityNames.getInvestigationName());
-            int spaceIndex = investigationName.indexOf(" ");
             String visitName = "";
             int visitIndex = investigationName.indexOf("visitId") + 9;
-            if (spaceIndex != -1)
+            if (visitIndex != -1)
             {
                 visitName = investigationName.substring(visitIndex, investigationName.length());
                 LOG.info("Visit name = " + visitName);
-                investigationName = investigationName.substring(0, spaceIndex);
+                investigationName = investigationName.substring(0, visitIndex - 11);
                 LOG.info("Investigation name = " + investigationName);
-                
             }
             whereClause = StringUtils.replaceOnce(whereClause, CURLY_BRACES, investigationName);
             whereClause = StringUtils.replaceOnce(whereClause, CURLY_BRACES, visitName);
@@ -1097,7 +1093,7 @@ public class IcatStore implements IWebdavStore {
                 + "' OR df.name like '" + Utils.escapeStringForIcatQuery(icatEntityNames.getDatafileName()) + "/%') INCLUDE 1";
         LOG.debug("icatQuery = [" + icatQuery + "]");
         List<Object> results = doIcatSearch(authString, icatQuery);
-        if (results.size() == 0) {
+        if (results.isEmpty()) {
             LOG.error("No results returned from icatQuery '" + icatQuery + "' - expected at least 1");
             String message = "Error getting Datafile and Children from icatEntityNames: " + icatEntityNames.toString();
             LOG.error(message);

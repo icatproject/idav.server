@@ -255,13 +255,26 @@ public class DoPropfind extends AbstractMethod {
             HttpServletRequest req, XMLWriter generatedXML, String path,
             int type, List<String> propertiesVector, String mimeType, StoredObject so)
             throws WebdavException {
-
-    	// KP 24/09/15 - old code
-//        StoredObject so = _store.getStoredObject(authString, path);
-    	// new code
     	if (so == null) {
     		so = _store.getStoredObject(authString, path);
     	}
+        
+        /*
+        StringBuilder builder = new StringBuilder(path);
+        int count = 0;
+        if (so == null) {
+            for (int i = 0; i < path.length(); i++) {
+                if (path.charAt(i) == '-') {
+                    if (count >= 2 && count <4) {
+                        builder.setCharAt(i, ':');
+                    }
+                    count ++;
+                }
+            }
+            path = builder.toString();
+            so = _store.getStoredObject(authString, path);
+        }
+        */
     	
         boolean isFolder = so.isFolder();
         String creationdate = CREATION_DATE_FORMAT.format(so.getCreationDate());
@@ -292,7 +305,9 @@ public class DoPropfind extends AbstractMethod {
             href += path;
         if ((isFolder) && (!href.endsWith("/")))
             href += "/";
-
+        
+        href = href.replaceAll(":", "-");
+        
         generatedXML.writeText(
                 (href));
 
