@@ -517,6 +517,20 @@ public class IcatStore implements IWebdavStore {
     public InputStream getResourceContent(String authString, String uri)
             throws WebdavException {
         LOG.trace("IcatStore.getResourceContent(" + uri + ")");
+        
+        StringBuilder builder = new StringBuilder(uri);
+        int count = 0;
+        if (!uri.contains(":")) {
+            for (int i = 0; i < uri.length(); i++) {
+                if (uri.charAt(i) == '-') {
+                    if (count >= 2 && count < 4) {
+                        builder.setCharAt(i, ':');
+                    }
+                    count ++;
+                }
+            }
+            uri = builder.toString();
+        }
 
         int datafilesLevelDepth = getDatafilesLevelDepth(uri);
         if (datafilesLevelDepth > -1) {
