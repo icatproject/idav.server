@@ -306,6 +306,7 @@ public class DoPropfind extends AbstractMethod {
         if ((isFolder) && (!href.endsWith("/")))
             href += "/";
         
+        // Get rid of ':' as Windows cannot deal with these characters
         href = href.replaceAll(":", "-");
         
         generatedXML.writeText(
@@ -402,7 +403,6 @@ public class DoPropfind extends AbstractMethod {
             List<String> propertiesNotFound = new ArrayList<String>();
 
             // Parse the list of properties
-
             generatedXML.writeElement("DAV::propstat", XMLWriter.OPENING);
             generatedXML.writeElement("DAV::prop", XMLWriter.OPENING);
 

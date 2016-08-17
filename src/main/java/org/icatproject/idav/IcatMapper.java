@@ -154,7 +154,18 @@ public class IcatMapper {
             //If combined columns required to hold uniqueness then need to combine visitId and Name
             if (entityName.equals("Investigation") && !entity.getColumnCombineValue().equals("")) {
                 select = "SELECT investigation FROM Investigation investigation ";
-            } else {
+            }
+            // Only use this if trying to omit cycles that have no investigations
+            else if (entityName.equals("FacilityCycle")) {
+                String instrumentName = icatEntityValues.get("Instrument");
+                select = "SELECT facilityCycle.name FROM FacilityCycle facilityCycle JOIN facilityCycle.facility facility " +
+                         "WHERE (SELECT COUNT (investigation) FROM Investigation investigation , investigation.investigationInstruments as investigationInstrumentPivot , " +
+                         "investigationInstrumentPivot.instrument as instrument WHERE instrument.name='" + instrumentName + "' AND " +
+                         "investigation.startDate BETWEEN " +
+                         "facilityCycle.startDate AND facilityCycle.endDate) > 0";
+                return select;
+            }
+            else {
                 select += StringUtils.uncapitalize(entityName) + "." + entity.getAttribute() + " FROM " + entity.getEntity() + " " + StringUtils.uncapitalize(entityName);
             }
         } else {

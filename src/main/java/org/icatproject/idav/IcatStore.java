@@ -26,6 +26,7 @@ import org.icatproject.Dataset;
 import org.icatproject.DatasetType;
 import org.icatproject.EntityBaseBean;
 import org.icatproject.Facility;
+import org.icatproject.FacilityCycle;
 import org.icatproject.ICAT;
 import org.icatproject.ICATService;
 import org.icatproject.IcatExceptionType;
@@ -419,7 +420,7 @@ public class IcatStore implements IWebdavStore {
         }
 
         LOG.debug("icatQuery = [" + icatQuery + "]");
-        
+      
         List<Object> results = doIcatSearch(authString, icatQuery);
         
         // If there are no results, try a new query with - instead of / or vice versa
@@ -435,6 +436,56 @@ public class IcatStore implements IWebdavStore {
             LOG.debug("icatQuery = [" + icatQuery + "]");
             results = doIcatSearch(authString, icatQuery);
         }
+        
+        /*
+        // Way number 1 - Very slow, more than 20 seconds across all searches 
+        if (selectedEntity.getEntity().equals("FacilityCycle")) {
+            List<Object> tempResults = new ArrayList<Object>();
+            final long startTime = System.nanoTime();
+            for (Object temp : results) {
+                FacilityCycle cycle = (FacilityCycle) temp;
+                String instrumentName = uriParts[2];
+                icatQuery = "SELECT count (investigation) FROM Investigation investigation  , investigation.facility as facility , facility.instruments as instrument , " +
+                            "facility.facilityCycles as facilityCycle , investigation.investigationInstruments as investigationInstrumentPivot , " +
+                            "investigationInstrumentPivot.instrument as investigationInstrument WHERE instrument.name='" + instrumentName + "' AND facilityCycle.name='" + cycle.getName() + "' " +
+                            "AND investigationInstrument.name= instrument.name AND  investigation.startDate BETWEEN facilityCycle.startDate AND facilityCycle.endDate";
+                LOG.debug("icatQuery = [" + icatQuery + "]");
+                List <Object> investigations = doIcatSearch(authString, icatQuery);
+                if ((long)investigations.get(0) > 0) {
+                    tempResults.add(cycle.getName());
+                }
+            }
+            final long duration = System.nanoTime() - startTime;
+            LOG.error("Time elapsed: " + duration);
+            results = tempResults;
+        }
+        */
+        
+        /*
+        // Way number 2 - Slightly faster, still 20 seconds + in most cases
+        if (selectedEntity.getEntity().equals("FacilityCycle")) {
+            List<Object> tempResults = new ArrayList<Object>();
+            final long startTime = System.nanoTime();
+            for (Object temp : results) {
+                FacilityCycle cycle = (FacilityCycle) temp;
+                String instrumentName = uriParts[2];
+                icatQuery = "SELECT investigation FROM Investigation investigation  , investigation.facility as facility , facility.instruments as instrument , " +
+                            "facility.facilityCycles as facilityCycle , investigation.investigationInstruments as investigationInstrumentPivot , " +
+                            "investigationInstrumentPivot.instrument as investigationInstrument WHERE instrument.name='" + instrumentName + "' AND facilityCycle.name='" + cycle.getName() + "' " +
+                            "AND investigationInstrument.name= instrument.name AND  investigation.startDate BETWEEN facilityCycle.startDate AND facilityCycle.endDate LIMIT 0,1";
+                LOG.debug("icatQuery = [" + icatQuery + "]");
+                List <Object> investigations = doIcatSearch(authString, icatQuery);
+                if (investigations.size() > 0) {
+                    if (investigations.get(0) != null) {
+                    tempResults.add(cycle.getName());
+                    }
+                }
+            }
+            final long duration = System.nanoTime() - startTime;
+            LOG.error("Time elapsed: " + duration);
+            results = tempResults;
+        }
+        */
         
         LOG.info("Found " + results.size() + " results");
 
@@ -460,19 +511,6 @@ public class IcatStore implements IWebdavStore {
         String[] resultsStringArray = new String[results.size()];
         resultsStringArray = results.toArray(resultsStringArray);
         return resultsStringArray;
-        /*
-            // create a list of all the file and virtual folder names 
-            // at the current datafile level depth
-            Set<String> children = new HashSet<String>();
-            for (Object pathObj : results) {
-                String relativePath = (String) pathObj;
-                String[] pathParts = getUriParts(relativePath);
-                children.add(pathParts[datafilesLevelDepth]);
-            }
-            String[] resultsStringArray = new String[children.size()];
-            resultsStringArray = children.toArray(resultsStringArray);
-            return resultsStringArray;
-         */
     }
 
     /**
@@ -509,7 +547,6 @@ public class IcatStore implements IWebdavStore {
         else {
             LOG.info(investigationName + " is not a calibration");
         }
-
         return investigationName;
     }
 
@@ -547,11 +584,6 @@ public class IcatStore implements IWebdavStore {
                     LOG.debug("Found datafile: " + Utils.getDatafileAsShortString(df));
                     DataSelection dataSelection = new DataSelection();
                     dataSelection.addDatafile(df.getId());
-                    // TODO - this could probably do with some buffering
-                    // TODO - why is the "outname" required
-//			        String[] uriParts = getUriParts(uri);
-//			        return idsClient.getData(getIcatSessionId(authString), dataSelection, Flag.NONE, uriParts[uriParts.length-1], 0L);
-                    // answer? - it is not and seems to have been removed in the IDS client 1.3.0
                     return idsClient.getData(getIcatSessionId(authString), dataSelection, Flag.NONE, 0L);
                 }
             } catch (IdsException e) {
@@ -580,9 +612,11 @@ public class IcatStore implements IWebdavStore {
         StringBuilder builder = new StringBuilder(uri);
         int count = 0;
         
-        if (!uri.contains(":")) {
+        // If we are passing through a URI without ':' it needs to be corrected to to the ICAT search correctly
+        if (uri.length() >= 4 && !uri.contains(":")) {
             for (int i = 0; i < uri.length(); i++) {
                 if (uri.charAt(i) == '-') {
+                    // Need to correct the 3rd and 4th semi-colons
                     if (count >= 2 && count < 4) {
                         builder.setCharAt(i, ':');
                     }
@@ -598,13 +632,14 @@ public class IcatStore implements IWebdavStore {
 
         int length = uriParts.length;
         
-        //Deal with going from Root level being 0 and next levels being 1 more then they should.
+        // Deal with going from Root level being 0 and next levels being 1 more then they should.
         if (length > 1) {
             length -= 2;
         }
         
+        // Check for dummy files that should be ignored
         for (String a : uriParts) {
-            if (a.equals("desktop.ini")) {
+            if (a.equals("desktop.ini") || a.equals("folder.gif")) {
                 return null;
             }
         }
