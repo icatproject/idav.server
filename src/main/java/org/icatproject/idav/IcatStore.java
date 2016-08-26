@@ -1380,28 +1380,6 @@ public class IcatStore implements IWebdavStore {
                 currentPosition += 1;
             }
         }
-        
-        /*
-        try {
-            icatEntityNames.setFacilityName(uriParts[1]);
-            icatEntityNames.setInvestigationName(uriParts[2]);
-            icatEntityNames.setDatasetName(uriParts[3]);
-            String datafile = "";
-            for (int i = DATAFILE_LEVEL; i < uriParts.length; i++) {
-                datafile += uriParts[i];
-                if (i != uriParts.length - 1) {
-                    datafile += "/";
-                }
-            }
-            if (!datafile.equals("")) {
-                icatEntityNames.setDatafileName(datafile);
-            }
-        } catch (ArrayIndexOutOfBoundsException e) {
-            // this is expected if the uri does not get right down to the
-            // datafile level and just means that some of the members
-            // of the IcatEntityNames object are left set to null
-        }
-         */
         return icatEntityNames;
     }
 

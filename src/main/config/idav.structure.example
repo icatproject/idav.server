@@ -1,0 +1,26 @@
+[
+	{
+		"entity":"Facility",
+		"attribute":"name"
+	},
+	{
+		"entity":"Instrument",
+		"attribute":"name"
+	},
+	{
+		"entity":"FacilityCycle",
+		"attribute":"name"
+	},
+	{
+		"entity":"Investigation",
+		"attribute":"title"
+	},
+	{
+		"entity":"Dataset",
+		"attribute":"name"
+	},
+	{
+		"entity":"Datafile",
+		"attribute":"name"
+	}	
+]

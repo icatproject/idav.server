@@ -50,7 +50,6 @@ public class IcatMapper {
         //Facility Cycle
         tempMap.put("Instrument-FacilityCycle-Investigation", " , investigation.facility as facility , facility.instruments as instrument , facility.facilityCycles as facilityCycle , investigation.investigationInstruments as investigationInstrumentPivot , investigationInstrumentPivot.instrument as investigationInstrument  ");
         icatMap = tempMap;
-
     }
 
     public String createWhere(ArrayList<IcatEntity> hierarchy, HashMap<String, String> icatEntityValues, int currentPosition, boolean child) {
@@ -75,7 +74,6 @@ public class IcatMapper {
                 //If combined columns split the name and visit id  
                 if (childValue.contains(childEntity.getColumnCombineValue())) {
                     String[] investigationValues = childValue.split(childEntity.getColumnCombineValue());
-
                     childWhereValue = " investigation.name='" + investigationValues[0].trim() + "' AND investigation.visitId='" + investigationValues[1].trim() + "'";
                 }
 
@@ -156,7 +154,7 @@ public class IcatMapper {
                 select = "SELECT investigation FROM Investigation investigation ";
             }
             // Only use this if trying to omit cycles that have no investigations
-            else if (entityName.equals("FacilityCycle")) {
+            /* else if (entityName.equals("FacilityCycle")) {
                 String instrumentName = icatEntityValues.get("Instrument");
                 select = "SELECT facilityCycle.name FROM FacilityCycle facilityCycle JOIN facilityCycle.facility facility " +
                          "WHERE (SELECT COUNT (investigation) FROM Investigation investigation , investigation.investigationInstruments as investigationInstrumentPivot , " +
@@ -164,7 +162,8 @@ public class IcatMapper {
                          "investigation.startDate BETWEEN " +
                          "facilityCycle.startDate AND facilityCycle.endDate) > 0";
                 return select;
-            }
+            
+            }*/
             else {
                 select += StringUtils.uncapitalize(entityName) + "." + entity.getAttribute() + " FROM " + entity.getEntity() + " " + StringUtils.uncapitalize(entityName);
             }
