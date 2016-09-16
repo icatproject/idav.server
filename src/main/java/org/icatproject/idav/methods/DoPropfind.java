@@ -63,6 +63,10 @@ public class DoPropfind extends AbstractMethod {
      * PROPFIND - Return property names.
      */
     private static final int FIND_PROPERTY_NAMES = 2;
+    
+    private static final String FORWARD_SLASH_OR_SLASHES = "/+";
+    
+    private static boolean placeMyData= false;
 
     private IWebdavStore _store;
     private ResourceLocks _resourceLocks;
@@ -135,7 +139,9 @@ public class DoPropfind extends AbstractMethod {
                     // no content, which means it is a allprop request
                     propertyFindType = FIND_ALL_PROP;
                 }
-
+                    
+                LOG.info("Property Find Type = " + propertyFindType);
+                
                 HashMap<String, String> namespaces = new HashMap<String, String>();
                 namespaces.put("DAV:", "D");
 
@@ -210,10 +216,18 @@ public class DoPropfind extends AbstractMethod {
             String currentPath, HttpServletRequest req, XMLWriter generatedXML,
             int propertyFindType, List<String> properties, int depth,
             String mimeType, StoredObject so) throws WebdavException {
+        
+        LOG.info("Called recursive parse properties");
+        
+        if (depth == 0) {
+            placeMyData = true;
+        }
 
         parseProperties(authString, req, generatedXML, currentPath,
                 propertyFindType, properties, mimeType, so);
-
+        
+        LOG.info("Depth = " + depth);
+        
         if (depth > 0) {
             // no need to get name if depth is already zero
             String[] names = _store.getChildrenNames(authString, currentPath);
@@ -221,6 +235,7 @@ public class DoPropfind extends AbstractMethod {
             String newPath = null;
 
             for (String name : names) {
+                LOG.info("Name = " + name);
                 newPath = currentPath;
                 if (!(newPath.endsWith("/"))) {
                     newPath += "/";
@@ -260,6 +275,13 @@ public class DoPropfind extends AbstractMethod {
     	}
         
         /*
+        if (path.equals("/ISIS") && placeMyData) {
+            parseProperties (authString, req, generatedXML, "/My Data", type, propertiesVector, mimeType, so);
+            placeMyData = false;
+        }
+        */
+        
+        /*
         StringBuilder builder = new StringBuilder(path);
         int count = 0;
         if (so == null) {
@@ -275,7 +297,9 @@ public class DoPropfind extends AbstractMethod {
             so = _store.getStoredObject(authString, path);
         }
         */
-    	
+    	LOG.info("Parsing properties");
+        LOG.info("ServletRequest = " + req);
+        LOG.info("Path = " + path);
         boolean isFolder = so.isFolder();
         String creationdate = CREATION_DATE_FORMAT.format(so.getCreationDate());
         String lastModified = LAST_MODIFIED_DATE_FORMAT.format(so
@@ -305,9 +329,30 @@ public class DoPropfind extends AbstractMethod {
             href += path;
         if ((isFolder) && (!href.endsWith("/")))
             href += "/";
-        
+       
         // Get rid of ':' as Windows cannot deal with these characters
         href = href.replaceAll(":", "-");
+        
+        String[] parts = href.split(FORWARD_SLASH_OR_SLASHES);
+        
+        Integer pathLength = parts.length;
+        
+        LOG.info("Length = "  + pathLength.toString());
+        
+        LOG.info("The path (href) is currently: " + href);
+        
+        if (href.contains("visitId") && parts.length == 6 && !parts[5].startsWith("CAL")) {
+            if (!href.contains("-")) {
+                href = href.replaceAll(("visitId"), "-");
+            }
+            else {
+                // first remove end of string with a substring 
+                href = href.substring(0, href.lastIndexOf("-") - 1);
+                href = href.replaceAll("visitId", "-");  
+            }
+        }
+        
+        LOG.info("The path (href) will be: " + href);
         
         generatedXML.writeText(
                 (href));
