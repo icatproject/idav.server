@@ -1,12 +1,12 @@
 # ICAT 
 
-icat.url https://icat-dev.isis.stfc.ac.uk:8181
+icat.url https://icatisis.esc.rl.ac.uk/
 icat.authenticators	simple ldap uows
 sessionRefreshMarginMins	10
 
 # IDS
 
-ids.url https://idsdev2.isis.cclrc.ac.uk
+ids.url https://icatds.isis.cclrc.ac.uk/
 
 
 # the following 4 properties are required in order to create 

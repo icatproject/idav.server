@@ -53,6 +53,8 @@ public class IcatMapper {
     }
 
     public String createWhere(ArrayList<IcatEntity> hierarchy, HashMap<String, String> icatEntityValues, int currentPosition, boolean child) {
+        
+        LOG.info("Creating the WHERE part of the query");
 
         String where = " WHERE ";
 
@@ -66,6 +68,7 @@ public class IcatMapper {
         LOG.info("Parent name = " + parentName);
         
         if (!child) {
+            LOG.info("Not a child!");
             String childWhereValue = "";
             String childValue = icatEntityValues.get(childEntity.getEntity());
 
@@ -89,6 +92,9 @@ public class IcatMapper {
 
                 childWhereValue += StringUtils.uncapitalize(childEntity.getEntity()) + "." + childEntity.getAttribute() + "='" + childValue + "'";
 
+            } else if (childName.equals("Instrument")) {
+                childWhereValue = " instrument.fullName='" + childValue + "'";
+                
             } else {
                 childWhereValue = StringUtils.uncapitalize(childEntity.getEntity()) + "." + childEntity.getAttribute() + "='" + childValue + "'";
             }
@@ -115,10 +121,15 @@ public class IcatMapper {
 
             where += parentWhereValue;
         }
+        
+        LOG.info("WHERE = [" + where + "]");
+        
         return where;
     }
 
     public String createJoin(ArrayList<IcatEntity> hierarchy, int currentPosition, boolean child) {
+        
+        LOG.info("Creating the JOIN part of the query");
 
         String join = "";
         String key = "";
@@ -134,14 +145,22 @@ public class IcatMapper {
             key = parentEntity.getEntity() + "-" + childEntity.getEntity();
         }
         join = icatMap.get(key);
-
+        
+        LOG.info("JOIN = [" + join + "]");
+        
         return join;
     }
 
     public String createQuery(ArrayList<IcatEntity> hierarchy, HashMap<String, String> icatEntityValues, int currentPosition, boolean child) {
-        LOG.debug("Creating select part of query");
+        LOG.debug("Creating SELECT part of query");
+        
+        LOG.info ("Current position = " + currentPosition);
+        
         IcatEntity entity = hierarchy.get(currentPosition);
-
+        
+        LOG.info("Entity = " + entity.getEntity());
+        LOG.info("Boolean child = " + child);
+        
         String finalQuery = "";
         String select = "SELECT ";
 
@@ -153,6 +172,11 @@ public class IcatMapper {
             if (entityName.equals("Investigation") && !entity.getColumnCombineValue().equals("")) {
                 select = "SELECT investigation FROM Investigation investigation ";
             }
+            
+            else if (entityName.equals("Instrument")) {
+                select = "SELECT instrument.fullName FROM Instrument instrument";
+            }
+
             // Only use this if trying to omit cycles that have no investigations
             /* else if (entityName.equals("FacilityCycle")) {
                 String instrumentName = icatEntityValues.get("Instrument");
@@ -172,6 +196,7 @@ public class IcatMapper {
         }
 
         finalQuery += select;
+        LOG.info("SELECT = [" + select + "]");
 
         //Only do Join and where if past root.
         if (currentPosition > 0) {

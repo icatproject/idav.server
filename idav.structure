@@ -5,7 +5,7 @@
 	},
 	{
 		"entity":"Instrument",
-		"attribute":"name"
+		"attribute":"fullName"
 	},
 	{
 		"entity":"FacilityCycle",

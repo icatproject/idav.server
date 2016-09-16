@@ -47,7 +47,7 @@ public class PropertyManager {
      * @param propertyFile Name of the properties file
      */
     public void collectProperties(String propertyFile) {
-        LOG.info("Reading properties.");
+        LOG.info("Reading properties from " + propertyFile);
         File f = new File(propertyFile);
         Properties props = null;
         try {
