@@ -16,10 +16,16 @@
             <id>nexus.esc.rl.ac.uk</id>
             <url>http://nexus.esc.rl.ac.uk:8081/nexus/content/groups/public</url>
         </repository>
-
+        
     </repositories>
   
     <dependencies>
+        
+        <dependency>
+            <groupId>uk.ac.rl.useroffice</groupId>
+            <artifactId>useroffice-ws-client</artifactId>
+            <version>1.0.0</version>
+        </dependency>
         
         <dependency>
             <groupId>org.apache.commons</groupId>
