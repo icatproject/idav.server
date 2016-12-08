@@ -719,6 +719,33 @@ public class IcatStore implements IWebdavStore {
                 LOG.debug("icatQuery = [" + icatQuery + "]");
                 results = doIcatSearch(authString, icatQuery);
                 
+                if (results.isEmpty() && icatQuery.contains("investigation.visitId=")) {
+                    LOG.info("Found no results in ICAT, trying a different query");
+                    
+                    int visitIndex = (icatQuery.indexOf("investigation.visitId"));
+                    int datafileIndex = (icatQuery.indexOf("AND datafile.dataset.name="));
+                    
+                    String queryBeg = icatQuery.substring(0, visitIndex);
+                    String queryMid = icatQuery.substring(visitIndex, datafileIndex);
+                    String queryEnd = icatQuery.substring(datafileIndex, icatQuery.length());
+                    
+                    int charCount = 0;
+                    char[] charArray = queryMid.toCharArray();
+                    
+                    for (char c : charArray) {
+                        charCount ++;
+                        if (Character.isDigit(c)) {
+                            break;
+                        }
+                    }
+                    
+                    queryMid = queryMid.substring(0, (charCount)) + "' ";
+                    icatQuery = queryBeg + queryMid + queryEnd;
+                    
+                    LOG.debug("icatQuery = [" + icatQuery + "]");
+                    results = doIcatSearch(authString, icatQuery);
+                }
+                
             }
             
             LOG.debug("Found " + results.size() + " results");

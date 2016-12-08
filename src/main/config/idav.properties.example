@@ -1,12 +1,12 @@
 # ICAT 
 
-icat.url https://icatisis.esc.rl.ac.uk/
+icat.url https://vm202.nubes.stfc.ac.uk/
 icat.authenticators	simple ldap uows
 sessionRefreshMarginMins	10
 
 # IDS
 
-ids.url https://icatds.isis.cclrc.ac.uk/
+ids.url https://vm202.nubes.stfc.ac.uk/
 
 
 # the following 4 properties are required in order to create 
@@ -17,7 +17,7 @@ datasetTypeName		Artemis
 datafileFormatName	unknown
 
 # Structure
-hierarchy {"Facility","Instrument","FacilityCycle","Investigation","Dataset","Datafile" }
+hierarchy {"Facility","Investigation","Dataset","Datafile" }
 
 
 # WebDav
