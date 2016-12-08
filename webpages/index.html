@@ -19,7 +19,7 @@ td.spacer {
 
 <body>
 
-<h1>CLF Artemis WebDAV File Server</h1>
+<h1>CLF Artemis File Server</h1>
 
 <h2>Purpose</h2>
 
@@ -28,14 +28,10 @@ td.spacer {
 <td class="spacer">&nbsp;</td>
 <td class="lightgrey">
 
-<p>This file server is run on behalf of the team operating the Artemis laser at STFC's Rutherford Appleton Laboratory.</p>
-<p>The Artemis team upload the data for each experiment onto the server, allowing the Facility Users to
-browse and download the data collected during their experiment.</p>
-<p>Because WebDAV is an extension to the HTTP protocol, the file server is available from any device connected to
-the internet, including inside RAL, from other academic institutions, from home etc.</p>
-<p>File and folder permissions are all handled by the server such that users only have access to the data from
-experiments which they are associated with. </p>
-<p>Users also only have read access to this data - they cannot upload additional files.</p>
+<p>All the user data and Artemis data are stored on the Artemis File Server.</p>
+<p>This webpage explains how to connect to the server and download the data for your experiment.</p>
+<p>Users must login using the email address and password which were used to register with the STFC Facilities User Office.</p>
+<p>In order to be able to transfer files larger than 50 MB in Windows you must follow the instructions in the section below.</p>
 
 </td>
 </tr>
@@ -50,28 +46,10 @@ experiments which they are associated with. </p>
 <td class="spacer">&nbsp;</td>
 <td class="lightgrey">
 
-<h3>Technical details - skip this paragraph if you are not interested in the details!</h3>
-<p>By default the maximum size of file that can be transfered from a WebDAV file server is 50 MB. </p>
-<p>This is typically enough for office documents but is not enough for some scientific data files.</p>
-<p>The limit is controlled by a setting in the Windows registry.</p>
-<p>The settings are found under the registry key:</p>
-<p>HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\WebClient\Parameters</p>
-<p>The parameter 'FileSizeLimitInBytes' needs changing from 50000000 (Decimal - ~50 MB) to ffffffff (Hex - 4 GB).</p>
-<p>After this the service 'WebClient' needs restarting to pick up the new value.</p>
-</td>
-</tr>
-</table>
-
-<p></p>
-
-<table>
-<tr>
-<td class="spacer">&nbsp;</td>
-<td class="lightgrey">
-
 <h3>How to increase the limit</h3>
-<p>The batch script <a href="webdav_files/registry_update.bat">downloadable here</a> will do this for you but needs to
-be run with administrator privileges. </p>
+<p>The batch script provided by the Scientific Computing Department at STFC and 
+<a href="webdav_files/registry_update.bat">downloadable here</a> 
+will do this for you but needs to be run with administrator privileges. </p>
 <p>If you are unsure as to whether you have administrator privileges
 then you can still download and run the script and you will be able to tell from the error messages.</p>
 
@@ -178,38 +156,12 @@ Click 'Remember my credentials' if you are logged into Windows using a personal 
 usual way using either the keyboard or mouse.</p>
 <p>When downloading folders containing large amounts of data (particularly lots of small files)
 this can be a slow process.</p>
-<p>A whole experiment can contain up to 100 GB of data and with a possible download speed of
-around 1 MB/sec, this would take around 24 hours to download.</p>
+<p>For example, an experiment containing around 10 GB of data may take a few hours to download 
+depending on your internet connection speed.</p>
 <p>You can get an idea of how long a download might take by right clicking on the file or folder
 and selecting 'Properties'.</p>
 <p>Be aware that whilst the progress bar in the copy dialog box is often quite accurate,
 the estimate of remaining time is often very wrong!</p>
-
-</td>
-</tr>
-</table>
-
-<h2>Uploading (only admin users)</h2>
-
-<table>
-<tr>
-<td class="spacer">&nbsp;</td>
-<td class="lightgrey">
-
-<p>In order to upload data for an experiment, open the top level 'Artemis' folder and you will
-then see a list of all the experiments.</p>
-<p>If you cannot find a folder for the experiment you are looking for, please contact
-Kevin Phipps in Scientific Computing to find out why this is.</p>
-<p>If you create a new experiment folder, any data saved to it will be safe but no Facility Users
-will have access to it - only other Facility Admin users.</p>
-<p>Open the folder corresponding to the experiment you want to upload data for.</p>
-<p>Drag and drop or copy and paste folders of data into the experiment folder in the usual way.</p>
-<p>Note that it is not possible to put files directly into the experiment folder. Only folders can be added at this level.</p>
-<p>Facility Admins have full access to read, create, modify and delete files and folders at any level, 
-so a certain level of care needs to be taken to ensure that files are not accidentally deleted.</p>
-<p>As mentioned in the Downloading section, if you are uploading a lot of data (particularly lots of
-small files) then this is likely to take a while - allow up to 15 minutes per gigabyte of data.</p>
-<p>To find out the size of the data to be uploaded, right click on the files or folders and select 'Properties'.</p> 
 
 </td>
 </tr>
