@@ -370,9 +370,19 @@ public abstract class AbstractMethod implements IMethodExecutor {
         try {
             documentBuilderFactory = DocumentBuilderFactory.newInstance();
             documentBuilderFactory.setNamespaceAware(true);
+            // disable XML External Entities to prevent XML XXE attacks as described at:
+            // https://www.owasp.org/index.php/XML_External_Entity_(XXE)_Prevention_Cheat_Sheet
+            documentBuilderFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            documentBuilderFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            documentBuilderFactory.setXIncludeAware(false);
+            documentBuilderFactory.setExpandEntityReferences(false);
+            //
             documentBuilder = documentBuilderFactory.newDocumentBuilder();
         } catch (ParserConfigurationException e) {
-            throw new ServletException("jaxp failed");
+			String msg = "Failed to create an XML DocumentBuilder which satisfies the configuration requested: "
+					+ e.getMessage();
+			LOG.error(msg);
+			throw new ServletException(msg);
         }
         return documentBuilder;
     }
