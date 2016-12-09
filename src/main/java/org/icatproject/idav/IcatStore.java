@@ -426,18 +426,44 @@ public class IcatStore implements IWebdavStore {
             
             if (results.isEmpty()) {
                 LOG.info("Found no results in ICAT, trying a different query");
-                int charCount = 0;
-                StringBuilder sb = new StringBuilder(icatQuery);
-                char[] charArray = sb.reverse().toString().toCharArray();
-                for (char c : charArray) {
-                    charCount ++;
-                    if (Character.isDigit(c)) {
-                        break;
+                if (icatQuery.contains("datafile.name=")) {
+                    visitIndex = (icatQuery.indexOf("investigation.visitId"));
+                    int datafileIndex = (icatQuery.indexOf("AND datafile.dataset.name="));
+                    
+                    String queryBeg = icatQuery.substring(0, visitIndex);
+                    String queryMid = icatQuery.substring(visitIndex, datafileIndex);
+                    String queryEnd = icatQuery.substring(datafileIndex, icatQuery.length());
+                    
+                    int charCount = 0;
+                    char[] charArray = queryMid.toCharArray();
+                    
+                    for (char c : charArray) {
+                        charCount ++;
+                        if (Character.isDigit(c)) {
+                            break;
+                        }
                     }
+                    
+                    queryMid = queryMid.substring(0, (charCount)) + "' ";
+                    icatQuery = queryBeg + queryMid + queryEnd;
+                    
+                    LOG.debug("icatQuery = [" + icatQuery + "]");
+                    results = doIcatSearch(authString, icatQuery);
                 }
-                icatQuery = icatQuery.substring(0, icatQuery.length() - (charCount - 1)) + "'";
-                LOG.info("icatQuery = [" + icatQuery + "]");
-                results = doIcatSearch(authString, icatQuery);
+                else {
+                    int charCount = 0;
+                    StringBuilder sb = new StringBuilder(icatQuery);
+                    char[] charArray = sb.reverse().toString().toCharArray();
+                    for (char c : charArray) {
+                        charCount ++;
+                        if (Character.isDigit(c)) {
+                            break;
+                        }
+                    }
+                    icatQuery = icatQuery.substring(0, icatQuery.length() - (charCount - 1)) + "'";
+                    LOG.info("icatQuery = [" + icatQuery + "]");
+                    results = doIcatSearch(authString, icatQuery);
+                }
             }
             
             if (results.size() != 1) {
@@ -604,19 +630,30 @@ public class IcatStore implements IWebdavStore {
                     icatQuery = "SELECT datafile from Datafile datafile" + createWhereClause(icatEntityNames, DatafileSearchType.EQUALS, true);
                     results = doIcatSearch(authString, icatQuery);
                 }
-                if (results.isEmpty()) {
+                if (results.isEmpty() && icatQuery.contains("investigation.visitId=")) {
                     LOG.info("Found no results in ICAT, trying a different query");
+                    
+                    int visitIndex = (icatQuery.indexOf("investigation.visitId"));
+                    int datafileIndex = (icatQuery.indexOf("AND datafile.dataset.name="));
+                    
+                    String queryBeg = icatQuery.substring(0, visitIndex);
+                    String queryMid = icatQuery.substring(visitIndex, datafileIndex);
+                    String queryEnd = icatQuery.substring(datafileIndex, icatQuery.length());
+                    
                     int charCount = 0;
-                    StringBuilder sb = new StringBuilder(icatQuery);
-                    char[] charArray = sb.reverse().toString().toCharArray();
+                    char[] charArray = queryMid.toCharArray();
+                    
                     for (char c : charArray) {
                         charCount ++;
                         if (Character.isDigit(c)) {
                             break;
                         }
                     }
-                    icatQuery = icatQuery.substring(0, icatQuery.length() - (charCount - 1)) + "'";
-                    LOG.info("icatQuery = [" + icatQuery + "]");
+                    
+                    queryMid = queryMid.substring(0, (charCount)) + "' ";
+                    icatQuery = queryBeg + queryMid + queryEnd;
+                    
+                    LOG.debug("icatQuery = [" + icatQuery + "]");
                     results = doIcatSearch(authString, icatQuery);
                 }
                 if (results.size() == 1) {
