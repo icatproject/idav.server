@@ -450,7 +450,9 @@ public class IcatStore implements IWebdavStore {
                     LOG.debug("icatQuery = [" + icatQuery + "]");
                     results = doIcatSearch(authString, icatQuery);
                 }
+
                 else {
+                    LOG.error("Length of URI = " + length);
                     int charCount = 0;
                     StringBuilder sb = new StringBuilder(icatQuery);
                     char[] charArray = sb.reverse().toString().toCharArray();
@@ -496,7 +498,13 @@ public class IcatStore implements IWebdavStore {
             results = doIcatSearch(authString, icatQuery);
         }
         
-        if (results.isEmpty()) {
+        // Make sure the length is equal to 4 because this means we are at
+        // the investigation level and need to check that the visit ID is
+        // in the correct format. IF we do this too early, we can create
+        // a query that will return more than 150,000 entries.
+        
+        LOG.error("Length of URI = " + length);
+        if (results.isEmpty() && length >= 4) {
             LOG.info("Found no results in ICAT, trying a different query");
             int charCount = 0;
             StringBuilder sb = new StringBuilder(icatQuery);
@@ -698,6 +706,15 @@ public class IcatStore implements IWebdavStore {
             length -= 2;
         }
         
+        if(uriParts.length > 0) {
+            String lastPart = uriParts[uriParts.length - 1];
+        
+            // Check for dummy files that should be ignored
+            if (lastPart.equals("desktop.ini") || lastPart.equals("folder.gif") || lastPart.equals("folder.jpg")) {
+                return null;
+            }
+        }
+
         // Add instrument back in by getting it from the second URI part and then replace the - with a visit id
         if (length >= 3 && !(uri.contains("visitId")) && !(uriParts[4].startsWith("CAL"))) {
             String part = uriParts[4];
@@ -725,13 +742,6 @@ public class IcatStore implements IWebdavStore {
         }
         
         IcatEntityNames icatEntityNames = getIcatEntityNames(uri);
-        
-        // Check for dummy files that should be ignored
-        for (String a : uriParts) {
-            if (a.equals("desktop.ini") || a.equals("folder.gif")) {
-                return null;
-            }
-        }
         
         IcatEntity selectedMember = hierarchy.get(length);
        
@@ -852,7 +862,12 @@ public class IcatStore implements IWebdavStore {
                 LOG.debug("icatQuery = [" + icatQuery + "]");
                 results = doIcatSearch(authString, icatQuery);
                 
-                if (results.isEmpty()) {
+                // Make sure the length is equal to 4 because this means we are at
+                // the investigation level and need to check that the visit ID is
+                // in the correct format. IF we do this too early, we can create
+                // a query that will return more than 150,000 entries.
+                LOG.error("Length of URI = " + length);
+                if (results.isEmpty() && length >= 3) {
                     LOG.info("Found no results in ICAT, trying a different query");
                     int charCount = 0;
                     StringBuilder sb = new StringBuilder(icatQuery);
