@@ -452,7 +452,6 @@ public class IcatStore implements IWebdavStore {
                 }
 
                 else {
-                    LOG.error("Length of URI = " + length);
                     int charCount = 0;
                     StringBuilder sb = new StringBuilder(icatQuery);
                     char[] charArray = sb.reverse().toString().toCharArray();
@@ -503,7 +502,6 @@ public class IcatStore implements IWebdavStore {
         // in the correct format. IF we do this too early, we can create
         // a query that will return more than 150,000 entries.
         
-        LOG.error("Length of URI = " + length);
         if (results.isEmpty() && length >= 4) {
             LOG.info("Found no results in ICAT, trying a different query");
             int charCount = 0;
@@ -866,7 +864,6 @@ public class IcatStore implements IWebdavStore {
                 // the investigation level and need to check that the visit ID is
                 // in the correct format. IF we do this too early, we can create
                 // a query that will return more than 150,000 entries.
-                LOG.error("Length of URI = " + length);
                 if (results.isEmpty() && length >= 3) {
                     LOG.info("Found no results in ICAT, trying a different query");
                     int charCount = 0;
