@@ -10,8 +10,23 @@
 	<servlet>
 		<servlet-name>webdav</servlet-name>
 		<servlet-class>
-			org.icatproject.idav.WebdavServlet
+                    org.icatproject.idav.WebdavServlet
 		</servlet-class>
+        </servlet>
+        
+        <servlet>
+		<servlet-name>images</servlet-name>
+		<servlet-class>
+                    org.icatproject.idav.WebdavEntities
+		</servlet-class>
+        </servlet>
+        
+        <servlet>
+                
+                <servlet-name>instructions</servlet-name>
+                <servlet-class>
+                    org.icatproject.idav.WebdavInstructions
+                </servlet-class>   
 		<!-- TODO - remove the init-params as they are now in a properties file -->
 		<!-- init-param>
 			<param-name>ResourceHandlerImplementation</param-name -->
@@ -31,8 +46,8 @@
 			<param-value>/tmp/webdav</param-value>
 			<description>
 				place where to store the webdavcontent on the filesystem
-			</description>
-		</init-param>
+			</description>	
+	</init-param>
 		
 	    <init-param>
 	        <param-name>lazyFolderCreationOnPut</param-name>
@@ -72,6 +87,16 @@
 		(including MS Webfolders) that do not respond correctly
  to the
 		redirects (302) that result from using a mapping of / -->
+        <servlet-mapping>
+		<servlet-name>images</servlet-name>
+		<url-pattern>/entities/*</url-pattern>
+	</servlet-mapping>          
+        
+        <servlet-mapping>
+		<servlet-name>instructions</servlet-name>
+		<url-pattern>/instructions/*</url-pattern>
+	</servlet-mapping>        
+                
 	<servlet-mapping>
 		<servlet-name>webdav</servlet-name>
 		<url-pattern>/*</url-pattern>
