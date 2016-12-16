@@ -33,6 +33,8 @@ public class PropertyManager {
     private String investigationTypeName;
     private String datasetTypeName;
     private String datafileFormatName;
+    private List<String> ignoredFiles;
+    
     private ArrayList<IcatEntity> hierarchy;
 
     public PropertyManager(String propertyFile, String hierarchyFile) {
@@ -63,12 +65,15 @@ public class PropertyManager {
 
         icatUrl = props.getProperty("icat.url").trim();
         idsUrl = props.getProperty("ids.url").trim();
-
+        
         String icatAuthenticatorsString = props.getProperty("icat.authenticators");
         icatAuthenticators = Arrays.asList(icatAuthenticatorsString.split("\\s+"));
 
         String sessionRefreshMarginMinsString = props.getProperty("sessionRefreshMarginMins");
         sessionRefreshMarginMins = Integer.parseInt(sessionRefreshMarginMinsString);
+        
+        String ignoredFilesString = props.getProperty("ignoredFiles");
+        ignoredFiles = Arrays.asList(ignoredFilesString.split("\\s+"));
         
         instrumentName = props.getProperty("instrumentName");
         investigationTypeName = props.getProperty("investigationTypeName");
@@ -77,6 +82,7 @@ public class PropertyManager {
 
         LOG.info("ICAT url set as: " + icatUrl);
         LOG.info("ICAT authenticators are: " + icatAuthenticators);
+        LOG.info("Ignored files are: " + ignoredFiles);
         LOG.info("Session refresh minutes are: " + sessionRefreshMarginMins);
         LOG.info("Instrument name is: '" + instrumentName + "'");
         LOG.info("Investigation type name is: '" + investigationTypeName + "'");
@@ -131,8 +137,6 @@ public class PropertyManager {
         this.hierarchy = hierarchy;
     }
     
-    
-
     public String getIcatUrl() {
         return icatUrl;
     }
@@ -143,6 +147,10 @@ public class PropertyManager {
 
     public List<String> getIcatAuthenticators() {
         return icatAuthenticators;
+    }
+    
+    public List<String> getIgnoredFiles() {
+        return ignoredFiles;
     }
 
     public int getSessionRefreshMarginMins() {
@@ -163,7 +171,5 @@ public class PropertyManager {
 
     public String getDatafileFormatName() {
         return datafileFormatName;
-    }
-
-    
+    }    
 }

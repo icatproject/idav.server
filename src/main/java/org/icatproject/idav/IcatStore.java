@@ -706,9 +706,11 @@ public class IcatStore implements IWebdavStore {
         
         if(uriParts.length > 0) {
             String lastPart = uriParts[uriParts.length - 1];
-        
+            List<String> ignoredFiles = properties.getIgnoredFiles();
+            
             // Check for dummy files that should be ignored
-            if (lastPart.equals("desktop.ini") || lastPart.equals("folder.gif") || lastPart.equals("folder.jpg")) {
+            //if (lastPart.equals("desktop.ini") || lastPart.equals("folder.gif") || lastPart.equals("folder.jpg")) {
+            if (ignoredFiles.contains(lastPart)) {
                 return null;
             }
         }
