@@ -6,20 +6,20 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import javax.annotation.Resource;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.icatproject.idav.manager.PropertyManager;
 
 @WebServlet("/entities")
 public class WebdavEntities extends HttpServlet {
     
-    private static org.slf4j.Logger LOG = org.slf4j.LoggerFactory
-            .getLogger(WebdavInstructions.class);
+    @Resource(lookup="java:app/AppName")
+    private String appName;
     
-    private PropertyManager properties;
+    private static org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(WebdavInstructions.class);
     
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -28,8 +28,10 @@ public class WebdavEntities extends HttpServlet {
         Path path = Paths.get(request.getRequestURI());
         String entityName = path.getFileName().toString();
         
+        String relativePath = "../applications/" + appName + "/webdav_files_isis/";
+        
         // Get the absolute path of the image
-        String filename = "/home/glassfish/glassfish4/glassfish/domains/domain1/applications/IDAV-0.0.2-SNAPSHOT/webdav_files_isis/" + entityName;
+        String filename = relativePath + entityName;
         
         String extension = "";
 
