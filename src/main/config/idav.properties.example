@@ -1,37 +1,35 @@
-# ICAT 
-
-icat.url https://vm202.nubes.stfc.ac.uk/
-icat.authenticators	simple ldap uows
-sessionRefreshMarginMins	10
+# ICAT
+icat.url https://icat-dev.isis.stfc.ac.uk
+icat.authenticators     simple uows ldap
+sessionRefreshMarginMins        10
 
 # IDS
+ids.url https://idsdev2.isis.cclrc.ac.uk
 
-ids.url https://vm202.nubes.stfc.ac.uk/
 
-
-# the following 4 properties are required in order to create 
+# the following 4 properties are required in order to create
 # new Facility, Investigation, Dataset and Datafile objects
-instrumentName		Artemis
-investigationTypeName	experiment
-datasetTypeName		Artemis
-datafileFormatName	unknown
+instrumentName          Artemis
+investigationTypeName   experiment
+datasetTypeName         Artemis
+datafileFormatName      unknown
 
 # Structure
-hierarchy {"Facility","Investigation","Dataset","Datafile" }
-
+hierarchy {"Facility","Instrument","FacilityCycle","Investigation","Dataset","Datafile" }
 
 # WebDav
-
-webdavImplementationClassName	net.sf.webdav.IcatStore
+webdavImplementationClassName   org.icatproject.idav.IcatStore
 
 # overriding RFC 2518, the folders of resources being created, can be created too if they do not exist.
 # TODO - find out what exactly this means!
-lazyFolderCreationOnPut	FALSE
+lazyFolderCreationOnPut FALSE
 
 # set this to TRUE if you want a "content-length" header to be set, otherwise set it to something else
-setContentLengthHeaders	TRUE
+setContentLengthHeaders TRUE
 
 # TODO - describe what these settings do (values were left empty in the web.xml file)
 defaultIndexFile
 insteadOf404
 
+# Ignored Files
+ignoredFiles desktop.ini folder.gif folder.jpg
