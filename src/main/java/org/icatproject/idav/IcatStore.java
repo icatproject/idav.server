@@ -7,10 +7,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.namespace.QName;
@@ -26,7 +24,6 @@ import org.icatproject.Dataset;
 import org.icatproject.DatasetType;
 import org.icatproject.EntityBaseBean;
 import org.icatproject.Facility;
-import org.icatproject.FacilityCycle;
 import org.icatproject.ICAT;
 import org.icatproject.ICATService;
 import org.icatproject.IcatExceptionType;
@@ -44,7 +41,6 @@ import org.icatproject.ids.client.IdsClient.Flag;
 import org.icatproject.ids.client.IdsException;
 import org.icatproject.ids.client.InsufficientPrivilegesException;
 
-import com.stfc.useroffice.webservice.*;
 
 /**
  * ICAT Implementation of IWebdavStore
@@ -686,6 +682,12 @@ public class IcatStore implements IWebdavStore {
         throw new WebdavException("getResourceLength not implemented yet for IcatStore");
     }
 
+    /* (non-Javadoc)
+     * @see org.icatproject.idav.IWebdavStore#getStoredObject(java.lang.String, java.lang.String)
+     * 
+     * returning null will indicate to the calling method that the resource was not found
+     * and this normally prompts a 404 to be returned to the client.
+     */
     @Override
     public StoredObject getStoredObject(String authString, String uri)
             throws WebdavException {
@@ -708,8 +710,10 @@ public class IcatStore implements IWebdavStore {
             String lastPart = uriParts[uriParts.length - 1];
             List<String> ignoredFiles = properties.getIgnoredFiles();
             
-            // Check for dummy files that should be ignored
-            //if (lastPart.equals("desktop.ini") || lastPart.equals("folder.gif") || lastPart.equals("folder.jpg")) {
+            // check for files that should be ignored
+            // these are typically those that operating systems and installed plugins for git, svn etc.
+            // continually look for such as desktop.ini, folder.gif, .git
+            // and which we don't want to waste time running ICAT queries looking for them
             if (ignoredFiles.contains(lastPart)) {
                 return null;
             }
@@ -832,15 +836,10 @@ public class IcatStore implements IWebdavStore {
                     return createFolderStoredObject(now, now);
                 }
             }
-        }
-        else if (uri.equals("My Data")) {
+        } else if (uri.equals("My Data")) {
             String username = Utils.getUsernamePasswordFromAuthString(authString).getUsername();
             LOG.debug("Getting data for " + username);
-            
-            
-            
-        }
-        else {
+        } else {
             LOG.info("Creating a new query");
             
             icatQuery = icatMapper.createQuery(hierarchy, icatEntityValues, length, false);
@@ -1466,7 +1465,7 @@ public class IcatStore implements IWebdavStore {
     private HashMap<String, String> getIcatEntityValues(String uri) {
         LOG.debug("Getting icat entity values");
 
-        HashMap<String, String> icatEntityValues = new HashMap();
+        HashMap<String, String> icatEntityValues = new HashMap<>();
 
         String[] uriParts = getUriParts(uri);
 

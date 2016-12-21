@@ -23,7 +23,7 @@ public class IcatMapper {
     public static HashMap<String, String> icatMap;
 
     static {
-        HashMap<String, String> tempMap = new HashMap();
+        HashMap<String, String> tempMap = new HashMap<>();
         //Datafile Mapping
         tempMap.put("Dataset-Datafile", " JOIN datafile.dataset dataset ");
 
