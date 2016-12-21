@@ -1,13 +1,20 @@
-# ICAT
+# ICAT 
 icat.url https://icat-dev.isis.stfc.ac.uk
-icat.authenticators     simple uows ldap
+icat.authenticators     simple ldap uows
 sessionRefreshMarginMins        10
 
 # IDS
 ids.url https://idsdev2.isis.cclrc.ac.uk
 
+# whether you want the application to automatically customise the HTML instructions
+# set this to FALSE if you are customising the instructions yourself or creating your own
+autoCreateInstructions  TRUE
 
-# the following 4 properties are required in order to create
+# required for setting up the instructions webpage
+# and associated images
+facilityName ISIS
+
+# the following 4 properties are required in order to create 
 # new Facility, Investigation, Dataset and Datafile objects
 instrumentName          Artemis
 investigationTypeName   experiment
@@ -32,4 +39,4 @@ defaultIndexFile
 insteadOf404
 
 # Ignored Files
-ignoredFiles desktop.ini folder.gif folder.jpg
+ignoredFiles desktop.ini folder.gif folder.jpg .git HEAD Thumbs.db

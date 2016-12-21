@@ -29,7 +29,9 @@ public class PropertyManager {
     private String idsUrl;
     private List<String> icatAuthenticators;
     private int sessionRefreshMarginMins;
-    private String instrumentName;
+    private boolean autoCreateInstructions = false;
+    private String facilityName;
+	private String instrumentName;
     private String investigationTypeName;
     private String datasetTypeName;
     private String datafileFormatName;
@@ -75,6 +77,9 @@ public class PropertyManager {
         String ignoredFilesString = props.getProperty("ignoredFiles");
         ignoredFiles = Arrays.asList(ignoredFilesString.split("\\s+"));
         
+        autoCreateInstructions = "TRUE".equalsIgnoreCase(props.getProperty("autoCreateInstructions"));
+        
+        facilityName = props.getProperty("facilityName");
         instrumentName = props.getProperty("instrumentName");
         investigationTypeName = props.getProperty("investigationTypeName");
         datasetTypeName = props.getProperty("datasetTypeName");
@@ -84,10 +89,12 @@ public class PropertyManager {
         LOG.info("ICAT authenticators are: " + icatAuthenticators);
         LOG.info("Ignored files are: " + ignoredFiles);
         LOG.info("Session refresh minutes are: " + sessionRefreshMarginMins);
+        LOG.info("Facility name is: '" + facilityName + "'");
         LOG.info("Instrument name is: '" + instrumentName + "'");
         LOG.info("Investigation type name is: '" + investigationTypeName + "'");
         LOG.info("Dataset type name is: '" + datasetTypeName + "'");
         LOG.info("Datafile format name is: '" + datafileFormatName + "'");
+        LOG.info("Auto create instructions is: " + autoCreateInstructions);
 
         LOG.info("Finished collecting properties.");
 
@@ -156,6 +163,14 @@ public class PropertyManager {
     public int getSessionRefreshMarginMins() {
         return sessionRefreshMarginMins;
     }
+
+    public boolean getAutoCreateInstructions() {
+        return autoCreateInstructions;
+    }
+    
+    public String getFacilityName() {
+		return facilityName;
+	}
 
     public String getInstrumentName() {
         return instrumentName;
