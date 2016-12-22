@@ -14,7 +14,9 @@ public class IcatEntityNames {
         return "IcatEntityNames [facilityName=" + facilityName
                 + ", investigationName=" + investigationName
                 + ", datasetName=" + datasetName
-                + ", datafileName=" + datafileName + "]";
+                + ", datafileName=" + datafileName
+                + ", cycleName=" + cycleName
+                + ", instrumentName=" + instrumentName + "]";
     }
 
     public String getCycleName() {

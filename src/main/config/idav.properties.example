@@ -6,6 +6,9 @@ sessionRefreshMarginMins        10
 # IDS
 ids.url https://idsdev2.isis.cclrc.ac.uk
 
+# if you want to ensure that IDAV cannot make changes to the ICAT or IDS then set readOnly to TRUE
+readOnly	TRUE
+
 # whether you want the application to automatically customise the HTML instructions
 # set this to FALSE if you are customising the instructions yourself or creating your own
 autoCreateInstructions  TRUE
@@ -20,9 +23,6 @@ instrumentName          Artemis
 investigationTypeName   experiment
 datasetTypeName         Artemis
 datafileFormatName      unknown
-
-# Structure
-hierarchy {"Facility","Instrument","FacilityCycle","Investigation","Dataset","Datafile" }
 
 # WebDav
 webdavImplementationClassName   org.icatproject.idav.IcatStore

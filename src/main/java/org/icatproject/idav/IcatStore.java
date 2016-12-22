@@ -75,7 +75,7 @@ public class IcatStore implements IWebdavStore {
     private static Object sessionMapsLock = new Object();
 
     //Hierarchy specified by the user.
-    private static ArrayList<IcatEntity> hierarchy;
+    private static List<IcatEntity> hierarchy;
 
     //ICAT Utility class for mapping entities
     private static IcatMapper icatMapper;
