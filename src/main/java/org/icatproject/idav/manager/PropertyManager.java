@@ -24,17 +24,24 @@ import org.slf4j.LoggerFactory;
 public class PropertyManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(PropertyManager.class);
-
-    private String icatUrl;
-    private String idsUrl;
+    
     private List<String> icatAuthenticators;
     private int sessionRefreshMarginMins;
     private boolean autoCreateInstructions = false;
+    private boolean lazyFolderCreationOnPut;
+    private boolean setContentLengthHeaders;
+    private boolean readOnly;
+    private String icatUrl;
+    private String idsUrl;
     private String facilityName;
-	private String instrumentName;
+    private String instrumentName;
     private String investigationTypeName;
     private String datasetTypeName;
     private String datafileFormatName;
+    private String webdavImplementationClassName;
+    private String defaultIndexFile;
+    private String insteadOf404;
+    
     private List<String> ignoredFiles;
     private List<IcatEntity> hierarchy;
 
@@ -76,13 +83,20 @@ public class PropertyManager {
         String ignoredFilesString = props.getProperty("ignoredFiles");
         ignoredFiles = Arrays.asList(ignoredFilesString.split("\\s+"));
         
-        autoCreateInstructions = "TRUE".equalsIgnoreCase(props.getProperty("autoCreateInstructions"));
-        
+        autoCreateInstructions = "TRUE".equalsIgnoreCase(props.getProperty("autoCreateInstructions"));       
         facilityName = props.getProperty("facilityName");
         instrumentName = props.getProperty("instrumentName");
         investigationTypeName = props.getProperty("investigationTypeName");
         datasetTypeName = props.getProperty("datasetTypeName");
         datafileFormatName = props.getProperty("datafileFormatName");
+        
+        webdavImplementationClassName = props.getProperty("webdavImplementationClassName");
+        defaultIndexFile = props.getProperty("defaultIndexFile");
+        insteadOf404 = props.getProperty("insteadOf404");
+         
+        lazyFolderCreationOnPut = "TRUE".equalsIgnoreCase(props.getProperty("lazyFolderCreationOnPut"));
+        setContentLengthHeaders = "TRUE".equalsIgnoreCase(props.getProperty("setContentLengthHeaders"));
+        readOnly = "TRUE".equalsIgnoreCase(props.getProperty("readOnly"));
 
         LOG.info("ICAT url set as: " + icatUrl);
         LOG.info("ICAT authenticators are: " + icatAuthenticators);
@@ -94,9 +108,14 @@ public class PropertyManager {
         LOG.info("Dataset type name is: '" + datasetTypeName + "'");
         LOG.info("Datafile format name is: '" + datafileFormatName + "'");
         LOG.info("Auto create instructions is: " + autoCreateInstructions);
-
+        LOG.info("webdavImplementationClassName set as: " + webdavImplementationClassName);
+        LOG.info("defaultIndexFile set as: " + defaultIndexFile);
+        LOG.info("insteadOf404 set as: " + insteadOf404);
+        LOG.info("lazyFolderCreationOnPut set as: " + lazyFolderCreationOnPut);
+        LOG.info("setContentLengthHeaders set as: " + setContentLengthHeaders);
+        LOG.info("Read Only set as: " + readOnly);
+        
         LOG.info("Finished collecting properties.");
-
     }
     
     /**
@@ -153,8 +172,8 @@ public class PropertyManager {
     }
     
     public String getFacilityName() {
-		return facilityName;
-	}
+        return facilityName;
+    }
 
     public String getInstrumentName() {
         return instrumentName;
@@ -170,5 +189,29 @@ public class PropertyManager {
 
     public String getDatafileFormatName() {
         return datafileFormatName;
-    }    
+    }
+    
+    public String getWebdavImplementationClassName() {
+        return webdavImplementationClassName;
+    }
+    
+    public String getDefaultIndexFile() {
+        return defaultIndexFile;
+    }
+    
+    public String getInsteadOf404() {
+        return insteadOf404;
+    }
+    
+    public boolean getLazyFolderCreationOnPut() {
+        return lazyFolderCreationOnPut;
+    }
+    
+    public boolean getSetContentLengthHeaders() {
+        return setContentLengthHeaders;
+    }
+    
+    public boolean getReadOnly() {
+        return readOnly;
+    }
 }
