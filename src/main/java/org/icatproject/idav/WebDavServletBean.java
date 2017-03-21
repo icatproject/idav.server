@@ -44,7 +44,7 @@ public class WebDavServletBean extends HttpServlet {
      */
     protected static final MD5Encoder MD5_ENCODER = new MD5Encoder();
 
-    private static final boolean READ_ONLY = false;
+    private boolean _readOnly = false;
     private ResourceLocks _resLocks;
     private IWebdavStore _store;
     private String _dftIndexFile;
@@ -68,13 +68,14 @@ public class WebDavServletBean extends HttpServlet {
 
     public void init(IWebdavStore store, String dftIndexFile,
             String insteadOf404, boolean setContentLengthHeaders,
-            boolean lazyFolderCreationOnPut) throws ServletException {
+            boolean lazyFolderCreationOnPut, boolean readOnly) throws ServletException {
 
         _store = store;
         _dftIndexFile = dftIndexFile;
         _insteadOf404 = insteadOf404;
         _setContentLengthHeaders = setContentLengthHeaders;
         _lazyFolderCreationOnPut = lazyFolderCreationOnPut;
+        _readOnly = readOnly;
 
         _mimeTyper = new IMimeTyper() {
             public String getMimeType(String path) {
@@ -129,30 +130,30 @@ public class WebDavServletBean extends HttpServlet {
 				return new DoHead(_store, _dftIndexFile, _insteadOf404,
 		                _resLocks, _mimeTyper, _setContentLengthHeaders);
 			case "DELETE":
-				return new DoDelete(_store, _resLocks, READ_ONLY);
+				return new DoDelete(_store, _resLocks, _readOnly);
 			case "COPY":
 				DoDelete doDelete1 = (DoDelete)getMethodExecutor("DELETE");
-				return new DoCopy(_store, _resLocks, doDelete1, READ_ONLY);
+				return new DoCopy(_store, _resLocks, doDelete1, _readOnly);
 			case "LOCK":
-				return new DoLock(_store, _resLocks, READ_ONLY);
+				return new DoLock(_store, _resLocks, _readOnly);
 			case "UNLOCK":
-				return new DoUnlock(_store, _resLocks, READ_ONLY);
+				return new DoUnlock(_store, _resLocks, _readOnly);
 			case "MOVE":
 				DoDelete doDelete2 = (DoDelete)getMethodExecutor("DELETE");
 				DoCopy doCopy = (DoCopy)getMethodExecutor("COPY");
-				return new DoMove(_store, _resLocks, doDelete2, doCopy, READ_ONLY);
+				return new DoMove(_store, _resLocks, doDelete2, doCopy, _readOnly);
 			case "MKCOL":
-				return new DoMkcol(_store, _resLocks, READ_ONLY);
+				return new DoMkcol(_store, _resLocks, _readOnly);
 			case "OPTIONS":
 				return new DoOptions(_store, _resLocks);
 			case "PUT":
-				return new DoPut(_store, _resLocks, READ_ONLY, _lazyFolderCreationOnPut);
+				return new DoPut(_store, _resLocks, _readOnly, _lazyFolderCreationOnPut);
 			case "PROPFIND":
 				return new DoPropfind(_store, _resLocks, _mimeTyper);
 			case "PROPPATCH":
-				return new DoProppatch(_store, _resLocks, READ_ONLY);
+				return new DoProppatch(_store, _resLocks, _readOnly);
 			default :
-				return new DoNotImplemented(READ_ONLY);
+				return new DoNotImplemented(_readOnly);
 		}
     }
     

@@ -61,6 +61,13 @@ public class WebdavServlet extends WebDavServletBean {
         
         IWebdavStore webdavStore = constructStore(clazzName);
 
+        boolean readOnly = true;
+        String readOnlyString = properties.getProperty("readOnly");
+        if ( readOnlyString != null && !readOnlyString.equalsIgnoreCase("TRUE") ) {
+        	readOnly = false;
+        }
+        LOG.info("readOnly is: '" + readOnly + "'");
+
         boolean lazyFolderCreationOnPut = false; 
         String lazyFolderCreationOnPutString = properties.getProperty("lazyFolderCreationOnPut");
         if ( lazyFolderCreationOnPutString != null && lazyFolderCreationOnPutString.equalsIgnoreCase("TRUE") ) {
@@ -81,7 +88,7 @@ public class WebdavServlet extends WebDavServletBean {
         LOG.info("setContentLengthHeaders is: '" + setContentLengthHeaders + "'");
 
         super.init(webdavStore, defaultIndexFile, insteadOf404,
-        		setContentLengthHeaders, lazyFolderCreationOnPut);
+        		setContentLengthHeaders, lazyFolderCreationOnPut, readOnly);
         
         LOG.info("WebdavServlet init complete");
     }

@@ -5,8 +5,9 @@
  */
 package org.icatproject.idav;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -20,39 +21,37 @@ public class IcatMapper {
     private static final String GENERAL_MAPPING = " JOIN datafile.dataset dataset JOIN dataset.investigation investigation ";
     private static final String INSTRUMENT_INVESTIGATION = " JOIN investigation.investigationInstruments investigationInstrument JOIN investigationInstrument.instrument instrument ";
 
-    public static HashMap<String, String> icatMap;
+    public static HashMap<String, String> icatMap = new HashMap<>();
 
     static {
-        HashMap<String, String> tempMap = new HashMap();
-        //Datafile Mapping
-        tempMap.put("Dataset-Datafile", " JOIN datafile.dataset dataset ");
+        // Datafile Mapping
+        icatMap.put("Dataset-Datafile", " JOIN datafile.dataset dataset ");
 
-        //Investigation Mapping
-        tempMap.put("Investigation-Dataset", " JOIN dataset.investigation investigation ");
-        tempMap.put("Investigation-Datafile", GENERAL_MAPPING);
-        tempMap.put("Investigation-Instrument", " JOIN instrument.investigationInstruments investigationInstrument JOIN investigationInstrument.investigation investigation ");
+        // Investigation Mapping
+        icatMap.put("Investigation-Dataset", " JOIN dataset.investigation investigation ");
+        icatMap.put("Investigation-Datafile", GENERAL_MAPPING);
+        icatMap.put("Investigation-Instrument", " JOIN instrument.investigationInstruments investigationInstrument JOIN investigationInstrument.investigation investigation ");
 
-        //Facility Mapping
-        tempMap.put("Facility-Investigation", " JOIN investigation.facility facility ");
-        tempMap.put("Facility-Instrument", " JOIN instrument.facility facility ");
-        tempMap.put("Facility-FacilityCycle", " JOIN facilityCycle.facility facility ");
+        // Facility Mapping
+        icatMap.put("Facility-Investigation", " JOIN investigation.facility facility ");
+        icatMap.put("Facility-Instrument", " JOIN instrument.facility facility ");
+        icatMap.put("Facility-FacilityCycle", " JOIN facilityCycle.facility facility ");
 
-        //Instrument Mapping
-        tempMap.put("Instrument-Investigation", INSTRUMENT_INVESTIGATION);
-        tempMap.put("Instrument-Dataset", " JOIN dataset.investigation investigation " + INSTRUMENT_INVESTIGATION);
-        tempMap.put("Instrument-Datafile", GENERAL_MAPPING + INSTRUMENT_INVESTIGATION);
-        tempMap.put("Instrument-FacilityCycle", " JOIN facilityCycle.facility facility JOIN facility.instruments instrument ");
+        // Instrument Mapping
+        icatMap.put("Instrument-Investigation", INSTRUMENT_INVESTIGATION);
+        icatMap.put("Instrument-Dataset", " JOIN dataset.investigation investigation " + INSTRUMENT_INVESTIGATION);
+        icatMap.put("Instrument-Datafile", GENERAL_MAPPING + INSTRUMENT_INVESTIGATION);
+        icatMap.put("Instrument-FacilityCycle", " JOIN facilityCycle.facility facility JOIN facility.instruments instrument ");
 
-        //Facility Cycle mapping
-        tempMap.put("FacilityCycle-Instrument", " JOIN instrument.facility facility JOIN facility.facilityCycles facilityCycle ");
-        tempMap.put("FacilityCycle-Investigation", " JOIN investigation.facility facility JOIN facility.facilityCycles facilityCycle ");
+        // FacilityCycle mapping
+        icatMap.put("FacilityCycle-Instrument", " JOIN instrument.facility facility JOIN facility.facilityCycles facilityCycle ");
+        icatMap.put("FacilityCycle-Investigation", " JOIN investigation.facility facility JOIN facility.facilityCycles facilityCycle ");
 
-        //Facility Cycle
-        tempMap.put("Instrument-FacilityCycle-Investigation", " , investigation.facility as facility , facility.instruments as instrument , facility.facilityCycles as facilityCycle , investigation.investigationInstruments as investigationInstrumentPivot , investigationInstrumentPivot.instrument as investigationInstrument  ");
-        icatMap = tempMap;
+        // FacilityCycle
+        icatMap.put("Instrument-FacilityCycle-Investigation", " , investigation.facility as facility , facility.instruments as instrument , facility.facilityCycles as facilityCycle , investigation.investigationInstruments as investigationInstrumentPivot , investigationInstrumentPivot.instrument as investigationInstrument  ");
     }
 
-    public String createWhere(ArrayList<IcatEntity> hierarchy, HashMap<String, String> icatEntityValues, int currentPosition, boolean child) {
+    private String createWhere(List<IcatEntity> hierarchy, HashMap<String, String> icatEntityValues, int currentPosition, boolean child) {
         
         LOG.info("Creating the WHERE part of the query");
 
@@ -79,7 +78,6 @@ public class IcatMapper {
                     String[] investigationValues = childValue.split(childEntity.getColumnCombineValue());
                     childWhereValue = " investigation.name='" + investigationValues[0].trim() + "' AND investigation.visitId='" + investigationValues[1].trim() + "'";
                 }
-
             } else if (childName.equals("Dataset") || childName.equals("Datafile")) {
                 if (parentName.equals("Investigation")) {
                     String parentValue = icatEntityValues.get(parentName);
@@ -89,18 +87,15 @@ public class IcatMapper {
                         childWhereValue = " investigation.name='" + investigationValues[0].trim() + "' AND investigation.visitId='" + investigationValues[1].trim() + "' AND ";
                     }
                 }
-
                 childWhereValue += StringUtils.uncapitalize(childEntity.getEntity()) + "." + childEntity.getAttribute() + "='" + childValue + "'";
-
             } else if (childName.equals("Instrument")) {
+            	// TODO - KP 22/12/16 - why is fullName specified here when we have specified
+            	// Instrument should use the attribute 'name' in the idav.structure file?
                 childWhereValue = " instrument.fullName='" + childValue + "'";
-                
             } else {
                 childWhereValue = StringUtils.uncapitalize(childEntity.getEntity()) + "." + childEntity.getAttribute() + "='" + childValue + "'";
             }
-
             where += childWhereValue;
-
         } 
         
         //If parent is FacilityCycle want to do between startDate and endDate of child entity.
@@ -127,7 +122,7 @@ public class IcatMapper {
         return where;
     }
 
-    public String createJoin(ArrayList<IcatEntity> hierarchy, int currentPosition, boolean child) {
+    private String createJoin(List<IcatEntity> hierarchy, int currentPosition, boolean child) {
         
         LOG.info("Creating the JOIN part of the query");
 
@@ -151,7 +146,7 @@ public class IcatMapper {
         return join;
     }
 
-    public String createQuery(ArrayList<IcatEntity> hierarchy, HashMap<String, String> icatEntityValues, int currentPosition, boolean child) {
+    public String createQuery(List<IcatEntity> hierarchy, HashMap<String, String> icatEntityValues, int currentPosition, boolean child) {
         LOG.debug("Creating SELECT part of query");
         
         LOG.info ("Current position = " + currentPosition);
@@ -171,9 +166,9 @@ public class IcatMapper {
             //If combined columns required to hold uniqueness then need to combine visitId and Name
             if (entityName.equals("Investigation") && !entity.getColumnCombineValue().equals("")) {
                 select = "SELECT investigation FROM Investigation investigation ";
-            }
-            
-            else if (entityName.equals("Instrument")) {
+            } else if (entityName.equals("Instrument")) {
+            	// TODO - KP 22/12/16 - why is fullName specified here when we have specified
+            	// Instrument should use the attribute 'name' in the idav.structure file?
                 select = "SELECT instrument.fullName FROM Instrument instrument";
             }
 

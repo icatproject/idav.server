@@ -36,12 +36,11 @@ public class PropertyManager {
     private String datasetTypeName;
     private String datafileFormatName;
     private List<String> ignoredFiles;
-    
-    private ArrayList<IcatEntity> hierarchy;
+    private List<IcatEntity> hierarchy;
 
     public PropertyManager(String propertyFile, String hierarchyFile) {
         collectProperties(propertyFile);
-        hierarchy = parseHierarchyFile(hierarchyFile);
+        parseHierarchyFile(hierarchyFile);
     }
 
     /**
@@ -50,7 +49,7 @@ public class PropertyManager {
      *
      * @param propertyFile Name of the properties file
      */
-    public void collectProperties(String propertyFile) {
+    private void collectProperties(String propertyFile) {
         LOG.info("Reading properties from " + propertyFile);
         File f = new File(propertyFile);
         Properties props = null;
@@ -101,49 +100,34 @@ public class PropertyManager {
     }
     
     /**
-     * Passes the hierarchy JSON file and places it in an ArrayList containing Members.
+     * Parses the hierarchy JSON file and places it in an ArrayList containing Members.
      * @param fileName name of the file to parse.
-     * @return an ArrayList of IcatEntity objects in the order required.
      */
-    public ArrayList<IcatEntity> parseHierarchyFile(String fileName){
+    private void parseHierarchyFile(String fileName){
         
-        ArrayList<IcatEntity> temp = new ArrayList<>();
-        
+        hierarchy = new ArrayList<>();
         try {
             JSONParser parser = new JSONParser();
             JSONArray resultArray = (JSONArray) parser.parse(new FileReader(fileName));
-            
-           
-            
-            for(Object hierarchyPoint:resultArray){
-               
+
+            for (Object hierarchyPoint : resultArray) {
                 JSONObject entity = (JSONObject) hierarchyPoint;
-                
                 IcatEntity member  = new IcatEntity(entity.get("entity").toString(),entity.get("attribute").toString());
                 //Only add for specific case
                 if("Investigation".equals(member.getEntity())){
                     member.setColumnCombineValue(entity.get("columnCombineValue").toString());
                 }
-                
-                temp.add(member);        
-                
-            
+                hierarchy.add(member);        
             }
-        } catch (IOException | ParseException ex) {
-            LOG.error("Issue parsing idav.structure "+ex);
+        } catch (IOException | ParseException e) {
+            LOG.error("Issue parsing idav.structure: " + e.getMessage());
         }
-        
-        return temp;
     }
 
-    public ArrayList<IcatEntity> getHierarchy() {
+    public List<IcatEntity> getHierarchy() {
         return hierarchy;
     }
 
-    public void setHierarchy(ArrayList<IcatEntity> hierarchy) {
-        this.hierarchy = hierarchy;
-    }
-    
     public String getIcatUrl() {
         return icatUrl;
     }

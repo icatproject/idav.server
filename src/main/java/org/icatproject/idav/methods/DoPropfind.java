@@ -66,7 +66,7 @@ public class DoPropfind extends AbstractMethod {
     
     private static final String FORWARD_SLASH_OR_SLASHES = "/+";
     
-    private static boolean placeMyData= false;
+//    private static boolean placeMyData= false;
 
     private IWebdavStore _store;
     private ResourceLocks _resourceLocks;
@@ -219,9 +219,9 @@ public class DoPropfind extends AbstractMethod {
         
         LOG.info("Called recursive parse properties");
         
-        if (depth == 0) {
-            placeMyData = true;
-        }
+//        if (depth == 0) {
+//            placeMyData = true;
+//        }
 
         parseProperties(authString, req, generatedXML, currentPath,
                 propertyFindType, properties, mimeType, so);
