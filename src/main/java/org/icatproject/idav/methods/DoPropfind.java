@@ -154,28 +154,25 @@ public class DoPropfind extends AbstractMethod {
                 resp.setContentType("text/xml; charset=UTF-8");
 
                 // Create multistatus object
-                XMLWriter generatedXML = new XMLWriter(resp.getWriter(),
-                        namespaces);
+                XMLWriter generatedXML = new XMLWriter(resp.getWriter(), namespaces);
                 generatedXML.writeXMLHeader();
-                generatedXML
-                        .writeElement("DAV::multistatus", XMLWriter.OPENING);
+                generatedXML.writeElement("DAV::multistatus", XMLWriter.OPENING);
                 // KP 23/09/15 - as we already have the StoredObject I have
                 // changed the parseProperties methods so that they this can
                 // be passed on and not looked up again in parseProperties
                 // thus saving a duplicate call to ICAT
                 if (_depth == 0) {
-                	LOG.trace("Calling parseProperties()");
+                    LOG.trace("Calling parseProperties()");
                     parseProperties(authString, req, generatedXML, path,
                             propertyFindType, properties, _mimeTyper
                                     .getMimeType(path), so);
                 } else {
-                	LOG.trace("Calling recursiveParseProperties()");
+                    LOG.trace("Calling recursiveParseProperties()");
                     recursiveParseProperties(authString, path, req,
                             generatedXML, propertyFindType, properties, _depth,
                             _mimeTyper.getMimeType(path), so);
                 }
-                generatedXML
-                        .writeElement("DAV::multistatus", XMLWriter.CLOSING);
+                generatedXML.writeElement("DAV::multistatus", XMLWriter.CLOSING);
 
                 generatedXML.sendData();
             } catch (AccessDeniedException e) {
@@ -219,17 +216,13 @@ public class DoPropfind extends AbstractMethod {
         
         LOG.info("Called recursive parse properties");
         
-//        if (depth == 0) {
-//            placeMyData = true;
-//        }
-
         parseProperties(authString, req, generatedXML, currentPath,
                 propertyFindType, properties, mimeType, so);
         
         LOG.info("Depth = " + depth);
         
         if (depth > 0) {
-            // no need to get name if depth is already zero
+            // No need to get name if depth is already zero
             String[] names = _store.getChildrenNames(authString, currentPath);
             names = names == null ? new String[] {} : names;
             String newPath = null;
@@ -271,32 +264,9 @@ public class DoPropfind extends AbstractMethod {
             int type, List<String> propertiesVector, String mimeType, StoredObject so)
             throws WebdavException {
     	if (so == null) {
-    		so = _store.getStoredObject(authString, path);
-    	}
-        
-        /*
-        if (path.equals("/ISIS") && placeMyData) {
-            parseProperties (authString, req, generatedXML, "/My Data", type, propertiesVector, mimeType, so);
-            placeMyData = false;
-        }
-        */
-        
-        /*
-        StringBuilder builder = new StringBuilder(path);
-        int count = 0;
-        if (so == null) {
-            for (int i = 0; i < path.length(); i++) {
-                if (path.charAt(i) == '-') {
-                    if (count >= 2 && count <4) {
-                        builder.setCharAt(i, ':');
-                    }
-                    count ++;
-                }
-            }
-            path = builder.toString();
             so = _store.getStoredObject(authString, path);
-        }
-        */
+    	}
+    
     	LOG.info("Parsing properties");
         LOG.info("ServletRequest = " + req);
         LOG.info("Path = " + path);
@@ -305,8 +275,6 @@ public class DoPropfind extends AbstractMethod {
         String lastModified = LAST_MODIFIED_DATE_FORMAT.format(so
                 .getLastModified());
         String resourceLength = String.valueOf(so.getResourceLength());
-
-        // ResourceInfo resourceInfo = new ResourceInfo(path, resources);
 
         generatedXML.writeElement("DAV::response", XMLWriter.OPENING);
         String status = new String("HTTP/1.1 " + WebdavStatus.SC_OK + " "
@@ -338,25 +306,24 @@ public class DoPropfind extends AbstractMethod {
         Integer pathLength = parts.length;
         
         LOG.info("Length = "  + pathLength.toString());
-        
         LOG.info("The path (href) is currently: " + href);
         
+        /*
         if (href.contains("visitId") && parts.length == 6 && !parts[5].startsWith("CAL")) {
             if (!href.contains("-")) {
                 href = href.replaceAll(("visitId"), "-");
             }
             else {
-                // first remove end of string with a substring 
+                // First remove end of string with a substring 
                 href = href.substring(0, href.lastIndexOf("-") - 1);
                 href = href.replaceAll("visitId", "-");  
             }
         }
+        */
         
         LOG.info("The path (href) will be: " + href);
         
-        generatedXML.writeText(
-                (href));
-
+        generatedXML.writeText((href));
         generatedXML.writeElement("DAV::href", XMLWriter.CLOSING);
 
         String resourceName = path;
@@ -461,17 +428,14 @@ public class DoPropfind extends AbstractMethod {
                     generatedXML.writeProperty("DAV::creationdate",
                             creationdate);
                 } else if (property.equals("DAV::displayname")) {
-                    generatedXML.writeElement("DAV::displayname",
-                            XMLWriter.OPENING);
+                    generatedXML.writeElement("DAV::displayname", XMLWriter.OPENING);
                     generatedXML.writeData(resourceName);
-                    generatedXML.writeElement("DAV::displayname",
-                            XMLWriter.CLOSING);
+                    generatedXML.writeElement("DAV::displayname", XMLWriter.CLOSING);
                 } else if (property.equals("DAV::getcontentlanguage")) {
                     if (isFolder) {
                         propertiesNotFound.add(property);
                     } else {
-                        generatedXML.writeElement("DAV::getcontentlanguage",
-                                XMLWriter.NO_CONTENT);
+                        generatedXML.writeElement("DAV::getcontentlanguage", XMLWriter.NO_CONTENT);
                     }
                 } else if (property.equals("DAV::getcontentlength")) {
                     if (isFolder) {
@@ -502,15 +466,11 @@ public class DoPropfind extends AbstractMethod {
                     }
                 } else if (property.equals("DAV::resourcetype")) {
                     if (isFolder) {
-                        generatedXML.writeElement("DAV::resourcetype",
-                                XMLWriter.OPENING);
-                        generatedXML.writeElement("DAV::collection",
-                                XMLWriter.NO_CONTENT);
-                        generatedXML.writeElement("DAV::resourcetype",
-                                XMLWriter.CLOSING);
+                        generatedXML.writeElement("DAV::resourcetype", XMLWriter.OPENING);
+                        generatedXML.writeElement("DAV::collection", XMLWriter.NO_CONTENT);
+                        generatedXML.writeElement("DAV::resourcetype", XMLWriter.CLOSING);
                     } else {
-                        generatedXML.writeElement("DAV::resourcetype",
-                                XMLWriter.NO_CONTENT);
+                        generatedXML.writeElement("DAV::resourcetype", XMLWriter.NO_CONTENT);
                     }
                 } else if (property.equals("DAV::source")) {
                     generatedXML.writeProperty("DAV::source", "");
@@ -689,8 +649,7 @@ public class DoPropfind extends AbstractMethod {
             generatedXML.writeElement("DAV::lockdiscovery", XMLWriter.CLOSING);
 
         } else {
-            generatedXML.writeElement("DAV::lockdiscovery",
-                    XMLWriter.NO_CONTENT);
+            generatedXML.writeElement("DAV::lockdiscovery",XMLWriter.NO_CONTENT);
         }
 
         lo = null;
