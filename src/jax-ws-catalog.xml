@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog" prefer="system">
+    <system systemId="https://fitbaweb1.isis.cclrc.ac.uk:8443/UserOfficeWebService/UserOfficeWebService?WSDL" uri="wsdl/fitbaweb1.isis.cclrc.ac.uk_8443/UserOfficeWebService/UserOfficeWebService.wsdl"/>
+    <system systemId="https://fitbaweb1.isis.cclrc.ac.uk:8443/UserOfficeWebService/UserOfficeWebService?xsd=1" uri="wsdl/fitbaweb1.isis.cclrc.ac.uk_8443/UserOfficeWebService/UserOfficeWebService.xsd_1.xsd"/>
+    <system systemId="https://fitbaweb1.isis.cclrc.ac.uk:8443/UserOfficeWebService/UserOfficeWebService?xsd=2" uri="wsdl/fitbaweb1.isis.cclrc.ac.uk_8443/UserOfficeWebService/UserOfficeWebService.xsd_2.xsd"/>
+</catalog>

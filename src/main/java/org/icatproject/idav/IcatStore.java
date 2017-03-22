@@ -63,6 +63,8 @@ public class IcatStore implements IWebdavStore {
     private static final String FOLDER = "FOLDER";
     private static final String TEMP_FILE_CONTENTS = "Temp file used by ICAT Webdav - please ignore";
     private static final String EMPTY_STRING = "";
+    
+    private String userId = null;
 
     // Two session maps used by all instances of IcatStore
     private static Map<String, String> authStringToIcatSessionIdMap = new HashMap<>();
@@ -202,6 +204,11 @@ public class IcatStore implements IWebdavStore {
             entry.setKey("username");
             entry.setValue(username);
             entries.add(entry);
+            
+            com.stfc.useroffice.webservice.UserOfficeWebService_Service service = new com.stfc.useroffice.webservice.UserOfficeWebService_Service();
+            com.stfc.useroffice.webservice.UserOfficeWebService port = service.getUserOfficeWebServicePort();
+            String fedId = username;
+            userId = "uows/" + port.getUserIdFromFedId(fedId);
 
             entry = new Entry();
             entry.setKey("password");
@@ -344,12 +351,17 @@ public class IcatStore implements IWebdavStore {
     @Override
     public String[] getChildrenNames(String authString, String uri) throws WebdavException {
         LOG.trace("IcatStore.getChildrenNames(" + uri + ")");
-        
         String[] uriParts = getUriParts(uri);
         int length = uriParts.length;
 
-        //Deal with going from Root level being 0 and next levels being 1 more then they should.
+        // Deal with going from Root level being 0 and next levels being 1 more then they should.
         if (length > 0) {
+            if (length > 1) {
+                // Add two to the length since we are skipping both cycle and instrument layers
+                if ("MY DATA".equalsIgnoreCase(uriParts[1])) {
+                    length += 2;
+                }
+            }
             length -= 1;
         }
         
@@ -357,8 +369,9 @@ public class IcatStore implements IWebdavStore {
         String icatQuery = null;
         int datafilesLevelDepth = getDatafilesLevelDepth(uri);
         LOG.debug("datafilesLevelDepth = " + datafilesLevelDepth);
-
+        
         IcatEntity selectedEntity = hierarchy.get(length);
+
         HashMap<String, String> icatEntityValues = getIcatEntityValues(uri);
         
         LOG.info("Have selected: " + selectedEntity.getEntity()); 
@@ -368,13 +381,18 @@ public class IcatStore implements IWebdavStore {
         }
        
         LOG.debug("Creating new query");
-        icatQuery = icatMapper.createQuery(hierarchy, icatEntityValues, length, true);
+        icatQuery = icatMapper.createQuery(hierarchy, icatEntityValues, length, true, userId);
         
         List<Object> results = doIcatSearch(authString, icatQuery);
         
+        if (uri.equals("/") && results.size() == 1) {
+            results.add("My Data");
+            
+        }
         LOG.info("Found " + results.size() + " results");
 
         // Need to combine columns if the entity is investigation and combine value isn't empty.
+        // This means that we attach the visit ID onto the end of the investigation
         if (selectedEntity.getEntity().equals("Investigation") && !selectedEntity.getColumnCombineValue().equals("")) {
             String combineValue = selectedEntity.getColumnCombineValue();
             String[] resultsStringArray = new String[results.size()];
@@ -417,7 +435,12 @@ public class IcatStore implements IWebdavStore {
         // /ISIS which would have an actual length of 2. Taking away one would still allow us to query
         // on the instrument layer. Since we have an extra level on top when looking for a specific 
         // stored object, we have to take an extra 1 away.
+        
         if (length > 1) {
+            // Add two to the length since we are skipping both cycle and instrument layers
+            if ("MY DATA".equalsIgnoreCase(uriParts[1])) {
+                length += 2;
+            }
             length -= 2;
         }
         
@@ -433,7 +456,7 @@ public class IcatStore implements IWebdavStore {
                 return null;
             }
         }
-  
+        
         IcatEntityNames icatEntityNames = getIcatEntityNames(uri);
         IcatEntity selectedMember = hierarchy.get(length);
         HashMap<String, String> icatEntityValues = getIcatEntityValues(uri);
@@ -486,7 +509,7 @@ public class IcatStore implements IWebdavStore {
         } else {
             LOG.info("Creating a new query");
             
-            icatQuery = icatMapper.createQuery(hierarchy, icatEntityValues, length, false);
+            icatQuery = icatMapper.createQuery(hierarchy, icatEntityValues, length, false, userId);
 
             LOG.debug("icatQuery = [" + icatQuery + "]");
             List<Object> results = doIcatSearch(authString, icatQuery);
@@ -627,10 +650,6 @@ public class IcatStore implements IWebdavStore {
         }
         return whereClause;
     }
-    
-    private static String createWhereClause(IcatEntityNames icatEntityNames, DatafileSearchType datafileSearchType, boolean replaceDashes) {
-        return createWhereClause(icatEntityNames, datafileSearchType, true, true);
-    }
 
     private static String createWhereClause(IcatEntityNames icatEntityNames, DatafileSearchType datafileSearchType) {
         return createWhereClause(icatEntityNames, datafileSearchType, true, false);
@@ -638,10 +657,6 @@ public class IcatStore implements IWebdavStore {
 
     private static String createWhereClause(IcatEntityNames icatEntityNames, boolean includeTopLevel) {
         return createWhereClause(icatEntityNames, DatafileSearchType.NONE, includeTopLevel, false);
-    }
-
-    private static String createWhereClause(IcatEntityNames icatEntityNames) {
-        return createWhereClause(icatEntityNames, DatafileSearchType.NONE, true, false);
     }
 
     // As there is a possibility of us trying this first with an expired ICAT session ID
@@ -1181,7 +1196,7 @@ public class IcatStore implements IWebdavStore {
     }
     
     // A method to separate out the visitId and the investigation name from the the string that ICATEntityNames returns.
-    private static String[] getInvestigationAndVisit(String combinedString) {
+    public static String[] getInvestigationAndVisit(String combinedString) {
         String[] investigationAndVisit = new String[2];
         // Get the index of the actual visit number
         String visitNumber = "";

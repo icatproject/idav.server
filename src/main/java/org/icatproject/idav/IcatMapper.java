@@ -17,7 +17,7 @@ package org.icatproject.idav;
 
 import java.util.HashMap;
 import java.util.List;
-
+import org.icatproject.idav.IcatStore;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -123,7 +123,7 @@ public class IcatMapper {
             } else if (childName.equals("Datafile")) {
                 // Get all of the values needed
                 String investigation = icatEntityValues.get("Investigation");
-                String[] investigationAndVisit =  getInvestigationAndVisit(Utils.escapeStringForIcatQuery(investigation));
+                String[] investigationAndVisit =  IcatStore.getInvestigationAndVisit(Utils.escapeStringForIcatQuery(investigation));
                 investigation = investigationAndVisit[0];
                 String visitId = investigationAndVisit[1];
                 String dataset = icatEntityValues.get("Dataset");
@@ -165,7 +165,12 @@ public class IcatMapper {
         return join;
     }
 
-    public String createQuery(List<IcatEntity> hierarchy, HashMap<String, String> icatEntityValues, int currentPosition, boolean child) {
+    public String createQuery(List<IcatEntity> hierarchy, HashMap<String, String> icatEntityValues, int currentPosition, boolean child, String userId) {
+        if (icatEntityValues.get("Facility") != null && icatEntityValues.get("Facility").equals("My Data")) {
+            LOG.info("Calling MyDataMapper to create the query");
+            MyDataMapper mapper = new MyDataMapper();
+            return mapper.createQuery(hierarchy, icatEntityValues, currentPosition, child, userId);
+        }
         LOG.debug("Creating SELECT part of query");
         
         LOG.info ("Current position = " + currentPosition);
@@ -215,45 +220,6 @@ public class IcatMapper {
         LOG.info("Full query: " + finalQuery);
         
         return finalQuery;
-    }
-    
-    // A method to separate out the visitId and the investigation name from the the string that ICATEntityNames returns.
-    private static String[] getInvestigationAndVisit(String combinedString) {
-        String[] investigationAndVisit = new String[2];
-        // Get the index of the actual visit number
-        String visitNumber = "";
-        String investigationName = "";
-        int visitIndex = combinedString.indexOf("visitId") + 9;
-        
-        if (visitIndex != -1)
-        {
-            // This will get the whole visit number, regardless of how many digits in the visitId.
-            visitNumber = combinedString.substring(visitIndex, combinedString.length());
-            // The investigationName is whatever is left of the string.
-            investigationName = combinedString.substring(0, visitIndex - 11);
-            
-            // Make sure that the investigation name contains the forwards slashes we need for a correct query.
-            if (investigationName.startsWith("CAL")) {
-                StringBuilder builder = new StringBuilder(investigationName);
-                int count = 0;
-                // Need to make sure to add the colons back when doing the query as well
-                if (!investigationName.contains(":")) {
-                    for (int i = 0; i < investigationName.length(); i++) {
-                        if (investigationName.charAt(i) == '-') {
-                            if (count >= 2 && count < 4) {
-                                builder.setCharAt(i, ':');
-                            }
-                            count ++;
-                        }
-                    }
-                    investigationName = builder.toString();
-                }
-            }
-        }
-        investigationAndVisit[0] = investigationName;
-        investigationAndVisit[1] = visitNumber;
-        
-        return investigationAndVisit;
     }
 
 }
