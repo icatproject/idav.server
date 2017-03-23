@@ -437,7 +437,6 @@ public class IcatStore implements IWebdavStore {
         // /ISIS which would have an actual length of 2. Taking away one would still allow us to query
         // on the instrument layer. Since we have an extra level on top when looking for a specific 
         // stored object, we have to take an extra 1 away.
-        
         if (length > 1) {
             // Add two to the length since we are skipping both cycle and instrument layers
             if ("MY DATA".equalsIgnoreCase(uriParts[1])) {
@@ -497,36 +496,23 @@ public class IcatStore implements IWebdavStore {
                     so.setResourceLength(df.getFileSize());
                     return so;
                 }
-            } else {
-                // check whether it is a "virtual folder"
-                icatQuery = "SELECT count(datafile) from Datafile datafile" + createWhereClause(icatEntityNames, DatafileSearchType.LIKE);
-                LOG.debug("icatQuery = [" + icatQuery + "]");
-                results = doIcatSearch(authString, icatQuery);
-                long dfCount = (Long) results.get(0);
-                if (dfCount > 0L) {
-                    // these are virtual folders created by most ICAT ingestion processes
-                    // where there is at least one datafile with a name (path) beginning with
-                    // the datafile name we are looking for
-                    LOG.debug("Found virtual folder (via name like) for uri: '" + uri + "'");
-                    // return a StoredObject with create and modified date set to now
-                    Date now = new Date();
-                    return createFolderStoredObject(now, now);
-                }
             }
         } else {
             LOG.info("Creating a new query");
             List<Object> results;
+            // If we are entering the MyData folder then we need to create a fake result
+            // which will imitate a Facility object which we can then use to create the
+            // folder in WebDav.
             if (uri.equals("/My Data")) {
                 results = new ArrayList<>();
                 Facility facility = new Facility();
+                // Set only the attributes that are necessary
                 facility.setName("My Data");
                 facility.setModTime(getXMLGregorianCalendarNow());
                 facility.setCreateTime(getXMLGregorianCalendarNow());
                 EntityBaseBean bean = (EntityBaseBean) facility;
                 return createFolderStoredObject(bean.getCreateTime(), bean.getModTime());
-            }
-            
-            else {
+            } else {
                 icatQuery = icatMapper.createQuery(hierarchy, icatEntityValues, length, false, userId);
 
                 LOG.debug("icatQuery = [" + icatQuery + "]");
