@@ -40,7 +40,7 @@ public class MyDataMapper {
         // the mapping is actually correct, but this would also require a lot of if statements.
         // However, to make this more of a versatile method, we should be able to determine 
         // the mappings more dynamically than this. - TODO
-        if (icatEntityValues.get("Instrument") == null) {
+        if (icatEntityValues.get("Instrument") != null) {
             investigation = icatEntityValues.get("Instrument");
             String[] investigationAndVisit =  IcatStore.getInvestigationAndVisit(Utils.escapeStringForIcatQuery(investigation));
             investigation = investigationAndVisit[0];
@@ -83,6 +83,8 @@ public class MyDataMapper {
                         "AND datafile.name = '" + datafile + "'";
             }
         }
+        
+        LOG.info("MyMapper query = " + query);
         return query;
     }
 
