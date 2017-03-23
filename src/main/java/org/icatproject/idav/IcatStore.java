@@ -6,9 +6,12 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.namespace.QName;
@@ -416,10 +419,9 @@ public class IcatStore implements IWebdavStore {
     @Override
     public StoredObject getStoredObject(String authString, String uri) throws WebdavException {
         LOG.trace("IcatStore.getStoredObject(" + uri + ")");
-
-        String icatQuery;
-       
-        int count = 0;
+        
+        boolean isMyData = false;
+        String icatQuery = "";
         
         String[] uriParts = getUriParts(uri);
         int length = uriParts.length;
@@ -439,6 +441,7 @@ public class IcatStore implements IWebdavStore {
         if (length > 1) {
             // Add two to the length since we are skipping both cycle and instrument layers
             if ("MY DATA".equalsIgnoreCase(uriParts[1])) {
+                isMyData = true;
                 length += 2;
             }
             length -= 2;
@@ -463,12 +466,16 @@ public class IcatStore implements IWebdavStore {
 
         if (selectedMember.getEntity().equals("Datafile")) {
             LOG.debug("Searching for a datafile...");
-            icatQuery = "SELECT datafile from Datafile datafile" + createWhereClause(icatEntityNames, DatafileSearchType.EQUALS);
+            if (isMyData) {
+                icatQuery = icatMapper.createQuery(hierarchy, icatEntityValues, length, false, userId);
+            }
+            else {
+                icatQuery = "SELECT datafile from Datafile datafile" + createWhereClause(icatEntityNames, DatafileSearchType.EQUALS);
+            }
             
             LOG.debug("icatQuery = [" + icatQuery + "]");
 
             List<Object> results = doIcatSearch(authString, icatQuery);
-            
             LOG.debug("Found " + results.size() + " results");
 
             if (results.size() == 1) {
@@ -508,11 +515,23 @@ public class IcatStore implements IWebdavStore {
             }
         } else {
             LOG.info("Creating a new query");
+            List<Object> results;
+            if (uri.equals("/My Data")) {
+                results = new ArrayList<>();
+                Facility facility = new Facility();
+                facility.setName("My Data");
+                facility.setModTime(getXMLGregorianCalendarNow());
+                facility.setCreateTime(getXMLGregorianCalendarNow());
+                EntityBaseBean bean = (EntityBaseBean) facility;
+                return createFolderStoredObject(bean.getCreateTime(), bean.getModTime());
+            }
             
-            icatQuery = icatMapper.createQuery(hierarchy, icatEntityValues, length, false, userId);
+            else {
+                icatQuery = icatMapper.createQuery(hierarchy, icatEntityValues, length, false, userId);
 
-            LOG.debug("icatQuery = [" + icatQuery + "]");
-            List<Object> results = doIcatSearch(authString, icatQuery);
+                LOG.debug("icatQuery = [" + icatQuery + "]");
+                results = doIcatSearch(authString, icatQuery);
+            }
             
             if (results.size() == 1) {
                 LOG.info("Found " + results.size() + " results in ICAT");
@@ -527,28 +546,53 @@ public class IcatStore implements IWebdavStore {
         return null;
     }
     
+    public XMLGregorianCalendar getXMLGregorianCalendarNow() {
+        try {
+            GregorianCalendar gregorianCalendar = new GregorianCalendar();
+            DatatypeFactory datatypeFactory = DatatypeFactory.newInstance();
+            XMLGregorianCalendar now = datatypeFactory.newXMLGregorianCalendar(gregorianCalendar);
+            return now;
+        } catch (DatatypeConfigurationException e) {
+            return null;
+        }
+    }
+    
     @Override
     public InputStream getResourceContent(String authString, String uri)
             throws WebdavException {
         LOG.trace("IcatStore.getResourceContent(" + uri + ")");
         
         String[] uriParts = getUriParts(uri);
-
+        boolean isMyData = false;
         int length = uriParts.length;
 
         // Deal with going from Root level being 0 and next levels being 1 more then they should.
         if (length > 0) {
-            length -= 1;
+            // Add two to the length since we are skipping both cycle and instrument layers
+            if ("MY DATA".equalsIgnoreCase(uriParts[1])) {
+                isMyData = true;
+            }
+            else {
+                length -= 1;
+            }
         }
         
         LOG.debug("Length = " + length);
 
         int datafilesLevelDepth = getDatafilesLevelDepth(uri);
         if (datafilesLevelDepth > -1) {
-            // we need to be at this level for it to be a datafile
-            IcatEntityNames icatEntityNames = getIcatEntityNames(uri);
-            // search for an exact datafile match (not a "folder") in this dataset, investigation and facility
-            String icatQuery = "SELECT datafile from Datafile datafile" + createWhereClause(icatEntityNames, DatafileSearchType.EQUALS);
+            String icatQuery = "";
+            if (isMyData) {
+                HashMap<String, String> icatEntityValues = getIcatEntityValues(uri);
+                icatQuery = icatMapper.createQuery(hierarchy, icatEntityValues, length, false, userId);
+            }
+            else {
+                // we need to be at this level for it to be a datafile
+                IcatEntityNames icatEntityNames = getIcatEntityNames(uri);
+                // search for an exact datafile match (not a "folder") in this dataset, investigation and facility
+                icatQuery = "SELECT datafile from Datafile datafile" + createWhereClause(icatEntityNames, DatafileSearchType.EQUALS);
+            }
+            
             LOG.debug("icatQuery = [" + icatQuery + "]");
             try {
                 List<Object> results = doIcatSearch(authString, icatQuery);

@@ -166,6 +166,8 @@ public class IcatMapper {
     }
 
     public String createQuery(List<IcatEntity> hierarchy, HashMap<String, String> icatEntityValues, int currentPosition, boolean child, String userId) {
+        // If we are in the MyData folder, we need to call the other mapper class to deal with the specific
+        // queries that we need to do in this folder.
         if (icatEntityValues.get("Facility") != null && icatEntityValues.get("Facility").equals("My Data")) {
             LOG.info("Calling MyDataMapper to create the query");
             MyDataMapper mapper = new MyDataMapper();
