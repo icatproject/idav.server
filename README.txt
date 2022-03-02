@@ -1,5 +1,7 @@
 Current Status
 --------------
+**Depecated project. No updates for several years and it is unclear that anybody is using this code.**
+
 This is the first version of IDAV - the WebDAV interface to ICAT. It has been
 produced specifically for the Artemis team within the Central Laser Facility at
 STFC. As such it has a number of limitations which mean it will most likely not 
